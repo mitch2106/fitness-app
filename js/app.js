@@ -418,11 +418,71 @@
       const hasWorkout = state.logs.some(l => new Date(l.date).toDateString() === dateStr);
       const isToday = d.toDateString() === now.toDateString();
 
+      const dayLogs = state.logs.filter(l => new Date(l.date).toDateString() === dateStr);
+      const hasWorkout = dayLogs.length > 0;
+
       const div = document.createElement('div');
       div.className = 'cal-day' + (isToday ? ' today' : '') + (hasWorkout ? ' done' : '');
       div.innerHTML = `<span class="cal-label">${dayLabels[i]}</span><span class="cal-num">${d.getDate()}</span>`;
+
+      if (hasWorkout) {
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => showDayDetail(dateStr, dayLogs));
+      }
+
       cal.appendChild(div);
     }
+  }
+
+  function showDayDetail(dateStr, dayLogs) {
+    const modal = document.getElementById('modal-day-detail');
+    const content = document.getElementById('day-detail-content');
+
+    const dateFormatted = new Date(dateStr).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' });
+    let html = `<h3>${dateFormatted}</h3>`;
+
+    dayLogs.forEach(log => {
+      const min = Math.floor((log.duration || 0) / 60);
+      const mainExercises = log.exercises.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
+      const totalSets = mainExercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+
+      html += `
+        <div class="day-detail-workout">
+          <div class="day-detail-header">
+            <span class="day-detail-name">${log.dayName}</span>
+            <span class="day-detail-meta">${min} Min. · ${totalSets} Sätze</span>
+          </div>
+          <div class="day-detail-exercises">
+      `;
+
+      mainExercises.forEach(ex => {
+        const exercise = window.getExercise(ex.exerciseId);
+        if (!exercise) return;
+        const completed = ex.sets.filter(s => s.completed);
+        if (completed.length === 0) return;
+
+        let detail = '';
+        if (completed[0].duration) {
+          detail = completed.map(s => `${s.duration}s`).join(', ');
+        } else if (completed[0].weight) {
+          detail = completed.map(s => `${s.reps}× ${s.weight}kg`).join(', ');
+        } else {
+          detail = completed.map(s => `${s.reps} Wdh.`).join(', ');
+        }
+
+        html += `
+          <div class="day-detail-ex">
+            <span class="day-detail-ex-name">${exercise.name}</span>
+            <span class="day-detail-ex-sets">${detail}</span>
+          </div>
+        `;
+      });
+
+      html += '</div></div>';
+    });
+
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
   }
 
   function calculateStreak(logs) {
@@ -1267,6 +1327,14 @@
 
     document.querySelector('.modal-confirm-backdrop').addEventListener('click', () => {
       document.getElementById('modal-confirm').classList.add('hidden');
+    });
+
+    // Day detail modal
+    document.getElementById('day-detail-close').addEventListener('click', () => {
+      document.getElementById('modal-day-detail').classList.add('hidden');
+    });
+    document.getElementById('day-detail-backdrop').addEventListener('click', () => {
+      document.getElementById('modal-day-detail').classList.add('hidden');
     });
 
     document.getElementById('progress-exercise-select').addEventListener('change', e => {

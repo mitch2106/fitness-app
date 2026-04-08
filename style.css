@@ -1284,6 +1284,8 @@ input::placeholder {
 }
 
 .cal-day.done .cal-label { color: rgba(255,255,255,0.7); }
+.cal-day.done { cursor: pointer; }
+.cal-day.done:active { opacity: 0.7; }
 
 .cal-num {
   display: block;
@@ -1472,6 +1474,63 @@ body.dark .note-textarea {
 .note-textarea:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+/* ── Day Detail Modal ────────────────────────────────────── */
+
+.day-detail-workout {
+  margin-top: 16px;
+}
+
+.day-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-detail-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.day-detail-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.day-detail-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-detail-ex {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-xs);
+}
+
+body.dark .day-detail-ex {
+  background: #12121F;
+}
+
+.day-detail-ex-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.day-detail-ex-sets {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 /* ── PR Celebration ──────────────────────────────────────── */
