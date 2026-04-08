@@ -51,11 +51,11 @@
     state.weightLog = load(STORAGE_KEYS.weightLog) || [];
   }
 
-  function saveProfile() { save(STORAGE_KEYS.profile, state.profile); }
-  function savePlan() { save(STORAGE_KEYS.plan, state.plan); }
-  function saveLogs() { save(STORAGE_KEYS.logs, state.logs); }
-  function saveNotes() { save(STORAGE_KEYS.notes, state.notes); }
-  function saveWeightLog() { save(STORAGE_KEYS.weightLog, state.weightLog); }
+  function saveProfile() { save(STORAGE_KEYS.profile, state.profile); if (window.FireSync) window.FireSync.saveProfile(state.profile); }
+  function savePlan() { save(STORAGE_KEYS.plan, state.plan); if (window.FireSync) window.FireSync.savePlan(state.plan); }
+  function saveLogs() { save(STORAGE_KEYS.logs, state.logs); if (window.FireSync) window.FireSync.saveLogs(state.logs); }
+  function saveNotes() { save(STORAGE_KEYS.notes, state.notes); if (window.FireSync) window.FireSync.saveNotes(state.notes); }
+  function saveWeightLog() { save(STORAGE_KEYS.weightLog, state.weightLog); if (window.FireSync) window.FireSync.saveWeightLog(state.weightLog); }
 
   // ── PR Detection ─────────────────────────────────────────
 
@@ -1344,13 +1344,35 @@
 
   // ── Init ─────────────────────────────────────────────────
 
-  function init() {
+  async function init() {
     loadState();
     initDarkMode();
     initEventListeners();
 
+    // Sync with Firebase in background
+    if (window.FireSync) {
+      try {
+        const merged = await window.FireSync.syncAll(state);
+        state.profile = merged.profile || state.profile;
+        state.plan = merged.plan || state.plan;
+        state.logs = merged.logs || state.logs;
+        state.notes = merged.notes || state.notes;
+        state.weightLog = merged.weightLog || state.weightLog;
+        // Update localStorage with merged data
+        if (state.profile) save(STORAGE_KEYS.profile, state.profile);
+        if (state.plan) save(STORAGE_KEYS.plan, state.plan);
+        save(STORAGE_KEYS.logs, state.logs);
+        save(STORAGE_KEYS.notes, state.notes);
+        save(STORAGE_KEYS.weightLog, state.weightLog);
+      } catch(e) { console.error('Firebase sync failed:', e); }
+    }
+
     const isOnboarded = load(STORAGE_KEYS.onboarded);
     if (isOnboarded && state.profile) {
+      showScreen('dashboard');
+    } else if (state.profile) {
+      // Recovered from Firebase but no local onboarded flag
+      save(STORAGE_KEYS.onboarded, true);
       showScreen('dashboard');
     } else {
       initOnboarding();
