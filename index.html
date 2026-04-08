@@ -186,6 +186,14 @@
         </div>
       </div>
 
+      <div class="week-calendar" id="week-calendar"></div>
+
+      <div id="today-workout" class="section hidden"></div>
+
+      <div id="deload-badge" class="deload-badge hidden">
+        🔄 Deload-Woche — Reduzierte Intensität zur Regeneration
+      </div>
+
       <div class="section">
         <h3 class="section-title">Dein Trainingsplan</h3>
         <div id="plan-days-list" class="plan-days-list"></div>
@@ -295,6 +303,13 @@
       <div class="section">
         <h3 class="section-title">Trainingshistorie</h3>
         <div id="history-list" class="history-list"></div>
+      </div>
+
+      <div class="section" id="weight-chart-container" class="hidden">
+        <h3 class="section-title">Gewichtsverlauf</h3>
+        <div class="chart-container">
+          <canvas id="weight-chart"></canvas>
+        </div>
       </div>
 
       <div class="section">
@@ -408,6 +423,10 @@
         <a class="btn btn-secondary btn-block" id="modal-video-link" target="_blank" rel="noopener">
           📹 Video zur Ausführung ansehen
         </a>
+      </div>
+      <div class="modal-notes">
+        <label class="modal-notes-label">Eigene Notizen</label>
+        <textarea id="modal-note-input" class="note-textarea" rows="2" placeholder="z.B. Linke Schulter aufpassen..."></textarea>
       </div>
     </div>
   </div>

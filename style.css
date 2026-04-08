@@ -1244,12 +1244,246 @@ input::placeholder {
   height: 22px;
 }
 
+/* ── Week Calendar ────────────────────────────────────────── */
+
+.week-calendar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  justify-content: space-between;
+}
+
+.cal-day {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+
+.cal-day.today {
+  border: 2px solid var(--primary);
+}
+
+.cal-day.done {
+  background: var(--success);
+  color: white;
+}
+
+.cal-day.done.today {
+  border-color: var(--success);
+}
+
+.cal-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cal-day.done .cal-label { color: rgba(255,255,255,0.7); }
+
+.cal-num {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* ── Today Workout Card ──────────────────────────────────── */
+
+.today-workout-inner {
+  background: linear-gradient(135deg, var(--primary), #E85D5D);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.today-workout-inner.done {
+  background: linear-gradient(135deg, var(--success), #00A884);
+  opacity: 0.8;
+}
+
+.today-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.today-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.today-nameDE {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-bottom: 14px;
+}
+
+.today-workout-inner .btn-primary {
+  background: rgba(255,255,255,0.2);
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ── Deload Badge ────────────────────────────────────────── */
+
+.deload-badge {
+  background: rgba(253, 203, 110, 0.15);
+  border: 1px solid rgba(253, 203, 110, 0.3);
+  color: var(--warning);
+  border-radius: var(--radius-xs);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* ── Cooldown Section ────────────────────────────────────── */
+
+.cooldown-section-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6C5CE7;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  margin-top: 20px;
+}
+
+.exercise-card.cooldown {
+  background: rgba(108, 92, 231, 0.06);
+  box-shadow: none;
+  border: 1px solid rgba(108, 92, 231, 0.15);
+}
+
+.exercise-card.cooldown .exercise-num {
+  background: #6C5CE7;
+}
+
+.exercise-card.warmup-set {
+  background: rgba(253, 203, 110, 0.06);
+  box-shadow: none;
+  border: 1px solid rgba(253, 203, 110, 0.2);
+}
+
+.exercise-card.warmup-set .exercise-num {
+  background: var(--warning);
+  color: var(--text);
+}
+
+/* ── Exercise Last Performance ───────────────────────────── */
+
+.exercise-last {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.last-perf-hint {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ── Workout Exercise Actions ────────────────────────────── */
+
+.workout-ex-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.exercise-swap-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-swap-btn:active {
+  background: var(--border);
+}
+
+.warmup-set-badge {
+  font-size: 0.7rem;
+  background: rgba(253, 203, 110, 0.2);
+  color: var(--warning);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.note-hint {
+  font-size: 0.75rem;
+  color: var(--warning);
+  margin-top: 4px;
+}
+
+/* ── Exercise Modal Notes ────────────────────────────────── */
+
+.modal-notes {
+  margin-top: 16px;
+}
+
+.modal-notes-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.note-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+body.dark .note-textarea {
+  background: #12121F;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.note-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ── PR Celebration ──────────────────────────────────────── */
+
+.pr-value {
+  color: var(--warning) !important;
+}
+
 /* ── Utilities ────────────────────────────────────────────── */
 
 .hidden { display: none !important; }
-
 .text-center { text-align: center; }
-
 .mt-8 { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }
 .mb-8 { margin-bottom: 8px; }
