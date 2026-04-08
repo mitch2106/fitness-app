@@ -415,9 +415,7 @@
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
       const dateStr = d.toDateString();
-      const hasWorkout = state.logs.some(l => new Date(l.date).toDateString() === dateStr);
       const isToday = d.toDateString() === now.toDateString();
-
       const dayLogs = state.logs.filter(l => new Date(l.date).toDateString() === dateStr);
       const hasWorkout = dayLogs.length > 0;
 
@@ -1344,39 +1342,42 @@
 
   // ── Init ─────────────────────────────────────────────────
 
-  async function init() {
+  function init() {
     loadState();
     initDarkMode();
+    initOnboarding(); // Always init onboarding listeners
     initEventListeners();
 
-    // Sync with Firebase in background
+    const isOnboarded = load(STORAGE_KEYS.onboarded);
+    if (isOnboarded && state.profile) {
+      showScreen('dashboard');
+    } else {
+      showScreen('onboarding');
+    }
+
+    // Sync with Firebase in background (non-blocking)
     if (window.FireSync) {
-      try {
-        const merged = await window.FireSync.syncAll(state);
+      window.FireSync.syncAll(state).then(merged => {
+        const hadProfile = !!state.profile;
         state.profile = merged.profile || state.profile;
         state.plan = merged.plan || state.plan;
         state.logs = merged.logs || state.logs;
         state.notes = merged.notes || state.notes;
         state.weightLog = merged.weightLog || state.weightLog;
-        // Update localStorage with merged data
         if (state.profile) save(STORAGE_KEYS.profile, state.profile);
         if (state.plan) save(STORAGE_KEYS.plan, state.plan);
         save(STORAGE_KEYS.logs, state.logs);
         save(STORAGE_KEYS.notes, state.notes);
         save(STORAGE_KEYS.weightLog, state.weightLog);
-      } catch(e) { console.error('Firebase sync failed:', e); }
-    }
 
-    const isOnboarded = load(STORAGE_KEYS.onboarded);
-    if (isOnboarded && state.profile) {
-      showScreen('dashboard');
-    } else if (state.profile) {
-      // Recovered from Firebase but no local onboarded flag
-      save(STORAGE_KEYS.onboarded, true);
-      showScreen('dashboard');
-    } else {
-      initOnboarding();
-      showScreen('onboarding');
+        // If we recovered a profile from Firebase, go to dashboard
+        if (!hadProfile && state.profile) {
+          save(STORAGE_KEYS.onboarded, true);
+          showScreen('dashboard');
+        } else if (state.activeScreen === 'dashboard') {
+          renderDashboard(); // Refresh with merged data
+        }
+      }).catch(e => console.error('Firebase sync failed:', e));
     }
   }
 
