@@ -8,7 +8,7 @@
     profile: 'fitplan_profile', plan: 'fitplan_plan',
     logs: 'fitplan_logs', onboarded: 'fitplan_onboarded',
     darkMode: 'fitplan_darkmode', notes: 'fitplan_notes',
-    weightLog: 'fitplan_weightlog'
+    weightLog: 'fitplan_weightlog', currentWorkout: 'fitplan_current_workout'
   };
 
   let state = {
@@ -37,6 +37,10 @@
   }
   function countdownBeep() { beep(800, 100); }
   function doneBeep() { beep(1200, 300); }
+  function haptic(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+  function hapticLight() { haptic(10); }
+  function hapticMedium() { haptic(25); }
+  function hapticHeavy() { haptic([50, 30, 50]); }
 
   // ── Persistence ──────────────────────────────────────────
 
@@ -56,6 +60,8 @@
   function saveLogs() { save(STORAGE_KEYS.logs, state.logs); if (window.FireSync) window.FireSync.saveLogs(state.logs); }
   function saveNotes() { save(STORAGE_KEYS.notes, state.notes); if (window.FireSync) window.FireSync.saveNotes(state.notes); }
   function saveWeightLog() { save(STORAGE_KEYS.weightLog, state.weightLog); if (window.FireSync) window.FireSync.saveWeightLog(state.weightLog); }
+  function saveCurrentWorkout() { save(STORAGE_KEYS.currentWorkout, state.currentWorkout ? { workout: state.currentWorkout, startedAt: workoutStartTime } : null); }
+  function clearSavedWorkout() { localStorage.removeItem(STORAGE_KEYS.currentWorkout); }
 
   // ── PR Detection ─────────────────────────────────────────
 
@@ -121,7 +127,7 @@
     canvas.height = window.innerHeight;
 
     const particles = [];
-    const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#FF8E8E','#00B894','#6C5CE7'];
+    const colors = ['#007AFF','#34C759','#FF9F0A','#FF3B30','#AF52DE','#5AC8FA'];
     for (let i = 0; i < 80; i++) {
       particles.push({
         x: canvas.width / 2 + (Math.random() - 0.5) * 200,
@@ -157,10 +163,21 @@
 
   // ── Navigation ───────────────────────────────────────────
 
+  let previousScreen = null;
   function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const slideScreens = ['plan-detail', 'settings'];
+    const slideUpScreens = ['workout', 'complete'];
+
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active', 'screen-slide-in', 'screen-slide-up');
+    });
     const screen = document.getElementById('screen-' + id);
-    if (screen) screen.classList.add('active');
+    if (screen) {
+      screen.classList.add('active');
+      if (slideScreens.includes(id)) screen.classList.add('screen-slide-in');
+      else if (slideUpScreens.includes(id)) screen.classList.add('screen-slide-up');
+    }
+    previousScreen = state.activeScreen;
     state.activeScreen = id;
 
     const nav = document.getElementById('bottom-nav');
@@ -312,6 +329,51 @@
     return DAY_ORDER[d === 0 ? 6 : d - 1];
   }
 
+  function renderRecoveryHint(logs) {
+    let hint = document.getElementById('recovery-hint');
+    if (!hint) return;
+
+    if (logs.length === 0) { hint.classList.add('hidden'); return; }
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dates = logs.map(l => { const d = new Date(l.date); d.setHours(0,0,0,0); return d.getTime(); });
+    const uniqueDates = [...new Set(dates)].sort((a,b) => b - a);
+
+    // Days since last workout
+    const lastWorkout = new Date(uniqueDates[0]);
+    const daysSinceLast = Math.floor((today - lastWorkout) / 86400000);
+
+    // Consecutive training days
+    let consecutiveDays = 0;
+    let checkDate = new Date(uniqueDates[0]);
+    for (const ts of uniqueDates) {
+      if (ts === checkDate.getTime()) { consecutiveDays++; checkDate.setDate(checkDate.getDate() - 1); }
+      else break;
+    }
+
+    let message = '';
+    let icon = '';
+
+    if (consecutiveDays >= 4 && daysSinceLast === 0) {
+      icon = '⚠️'; message = `${consecutiveDays} Tage in Folge trainiert – gönne dir morgen eine Pause!`;
+    } else if (daysSinceLast === 0 && consecutiveDays >= 2) {
+      icon = '💪'; message = `${consecutiveDays} Tage am Stück – starke Serie!`;
+    } else if (daysSinceLast >= 2 && daysSinceLast <= 3) {
+      icon = '🔋'; message = `${daysSinceLast} Tage Pause – gut regeneriert, Zeit fürs nächste Training!`;
+    } else if (daysSinceLast >= 4 && daysSinceLast <= 7) {
+      icon = '👋'; message = `${daysSinceLast} Tage seit dem letzten Training – heute wieder loslegen?`;
+    } else if (daysSinceLast > 7) {
+      icon = '🔥'; message = `${daysSinceLast} Tage Pause – ein neuer Start ist jederzeit möglich!`;
+    }
+
+    if (message) {
+      hint.classList.remove('hidden');
+      hint.innerHTML = `<span class="recovery-icon">${icon}</span> ${message}`;
+    } else {
+      hint.classList.add('hidden');
+    }
+  }
+
   function renderDashboard() {
     if (!state.profile) return;
     if (!state.plan || !state.plan.days || state.plan.days.length === 0) {
@@ -343,6 +405,9 @@
     const preferred = getPreferredSorted();
     const todayKey = getTodayKey();
     const today = new Date().toDateString();
+
+    // Rest day / recovery hint
+    renderRecoveryHint(logs);
 
     // Identify today's workout
     let todayIdx = -1;
@@ -660,6 +725,11 @@
         else if (last.duration) lastStr = `Letztes Mal: ${last.duration}s`;
       }
 
+      const isMain = !ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet;
+      const mainExercises = day.exercises.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
+      const mainIdx = mainExercises.indexOf(ex);
+      const exGlobalIdx = day.exercises.indexOf(ex);
+
       card.innerHTML = `
         <div class="exercise-num">${num}</div>
         <div class="exercise-info">
@@ -668,8 +738,35 @@
           <div class="exercise-meta">${meta}</div>
           ${lastStr ? `<div class="exercise-last">${lastStr}</div>` : ''}
         </div>
+        ${isMain ? `<div class="exercise-reorder">
+          <button type="button" class="reorder-btn reorder-up" ${mainIdx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="reorder-btn reorder-down" ${mainIdx === mainExercises.length - 1 ? 'disabled' : ''}>▼</button>
+        </div>` : ''}
         <button class="exercise-info-btn">ℹ</button>
       `;
+
+      if (isMain) {
+        const upBtn = card.querySelector('.reorder-up');
+        const downBtn = card.querySelector('.reorder-down');
+        if (upBtn && mainIdx > 0) {
+          upBtn.addEventListener('click', e => {
+            e.stopPropagation(); hapticLight();
+            const prevMainEx = mainExercises[mainIdx - 1];
+            const prevGlobalIdx = day.exercises.indexOf(prevMainEx);
+            [day.exercises[exGlobalIdx], day.exercises[prevGlobalIdx]] = [day.exercises[prevGlobalIdx], day.exercises[exGlobalIdx]];
+            savePlan(); showPlanDetail(dayIdx);
+          });
+        }
+        if (downBtn && mainIdx < mainExercises.length - 1) {
+          downBtn.addEventListener('click', e => {
+            e.stopPropagation(); hapticLight();
+            const nextMainEx = mainExercises[mainIdx + 1];
+            const nextGlobalIdx = day.exercises.indexOf(nextMainEx);
+            [day.exercises[exGlobalIdx], day.exercises[nextGlobalIdx]] = [day.exercises[nextGlobalIdx], day.exercises[exGlobalIdx]];
+            savePlan(); showPlanDetail(dayIdx);
+          });
+        }
+      }
 
       card.querySelector('.exercise-info-btn').addEventListener('click', e => {
         e.stopPropagation();
@@ -887,25 +984,55 @@
             const inputGroup = document.createElement('div');
             inputGroup.className = 'set-input-group';
 
+            // Reps stepper
+            const repsMinus = document.createElement('button');
+            repsMinus.type = 'button'; repsMinus.className = 'stepper-btn';
+            repsMinus.textContent = '−';
+            repsMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.reps = Math.max(1, (set.reps || ex.targetReps) - 1); repsInput.value = set.reps; });
+            inputGroup.appendChild(repsMinus);
+
             const repsInput = document.createElement('input');
             repsInput.type = 'number'; repsInput.className = 'set-input';
             repsInput.placeholder = ex.targetReps; repsInput.inputMode = 'numeric';
             repsInput.value = set.reps || '';
             repsInput.addEventListener('input', e => { set.reps = +e.target.value; });
-
             inputGroup.appendChild(repsInput);
+
+            const repsPlus = document.createElement('button');
+            repsPlus.type = 'button'; repsPlus.className = 'stepper-btn';
+            repsPlus.textContent = '+';
+            repsPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.reps = (set.reps || ex.targetReps) + 1; repsInput.value = set.reps; });
+            inputGroup.appendChild(repsPlus);
+
             const repsLabel = document.createElement('span');
             repsLabel.className = 'set-input-label';
             repsLabel.textContent = 'Wdh';
             inputGroup.appendChild(repsLabel);
 
             if (ex.targetWeight) {
+              const sep = document.createElement('span');
+              sep.className = 'set-input-sep';
+              inputGroup.appendChild(sep);
+
+              const wMinus = document.createElement('button');
+              wMinus.type = 'button'; wMinus.className = 'stepper-btn';
+              wMinus.textContent = '−';
+              wMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = Math.max(0.5, (set.weight || ex.targetWeight) - 0.5); wInput.value = set.weight; });
+              inputGroup.appendChild(wMinus);
+
               const wInput = document.createElement('input');
               wInput.type = 'number'; wInput.className = 'set-input';
               wInput.placeholder = ex.targetWeight; wInput.inputMode = 'decimal'; wInput.step = '0.5';
               wInput.value = set.weight || '';
               wInput.addEventListener('input', e => { set.weight = +e.target.value; });
               inputGroup.appendChild(wInput);
+
+              const wPlus = document.createElement('button');
+              wPlus.type = 'button'; wPlus.className = 'stepper-btn';
+              wPlus.textContent = '+';
+              wPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = (set.weight || ex.targetWeight) + 0.5; wInput.value = set.weight; });
+              inputGroup.appendChild(wPlus);
+
               const kgLabel = document.createElement('span');
               kgLabel.className = 'set-input-label';
               kgLabel.textContent = 'kg';
@@ -941,11 +1068,12 @@
                   wo.prs.push(ex.exerciseId);
                   showConfetti();
                   doneBeep();
-                  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+                  hapticHeavy();
                 }
               }
             }
 
+            hapticMedium();
             renderWorkout();
             maybeShowRestTimer(ex, exIdx, setIdx);
           });
@@ -961,6 +1089,9 @@
     // Progress bar
     const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
     document.getElementById('workout-progress-fill').style.width = progress + '%';
+
+    // Persist workout progress
+    saveCurrentWorkout();
 
     // Check if all done
     if (wo.exercises.every(ex => ex.sets.every(s => s.completed)) && completedSets > 0) {
@@ -1041,7 +1172,7 @@
         clearInterval(restTimerInterval);
         overlay.classList.add('hidden');
         doneBeep();
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        hapticHeavy();
       }
     }, 50);
   }
@@ -1091,7 +1222,7 @@
           clearInterval(exerciseTimerInterval);
           exerciseTimerRunning = false;
           doneBeep();
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          hapticHeavy();
           document.getElementById('btn-timer-toggle').textContent = 'Start';
           closeExerciseTimer(exerciseTimerTotal);
         }
@@ -1153,6 +1284,7 @@
     if (prCount > 0) showConfetti();
 
     state.currentWorkout = null;
+    clearSavedWorkout();
     showScreen('complete');
   }
 
@@ -1443,6 +1575,7 @@
           const exercise = window.getExercise(ex.exerciseId);
           const set = ex.sets[info.setIdx];
           if (ex && exercise && set) {
+            hapticLight();
             openExerciseTimer(exercise.name, ex.targetDuration, finalTime => {
               set.duration = finalTime;
               set.completed = true;
@@ -1466,6 +1599,7 @@
               if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
             }
             set.completed = true;
+            hapticMedium();
 
             if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) {
               if (checkForPR(ex.exerciseId, ex.sets)) {
@@ -1473,7 +1607,7 @@
                   wo.prs.push(ex.exerciseId);
                   showConfetti();
                   doneBeep();
-                  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+                  hapticHeavy();
                 }
               }
             }
@@ -1492,6 +1626,7 @@
         document.getElementById('rest-overlay').classList.add('hidden');
         document.getElementById('exercise-timer-overlay').classList.add('hidden');
         state.currentWorkout = null;
+        clearSavedWorkout();
         showScreen('dashboard');
       });
     });
@@ -1569,7 +1704,18 @@
 
     const isOnboarded = load(STORAGE_KEYS.onboarded);
     if (isOnboarded && state.profile) {
-      showScreen('dashboard');
+      // Restore in-progress workout
+      const savedWorkout = load(STORAGE_KEYS.currentWorkout);
+      if (savedWorkout && savedWorkout.workout) {
+        state.currentWorkout = savedWorkout.workout;
+        workoutStartTime = savedWorkout.startedAt || Date.now();
+        document.getElementById('workout-title').textContent = state.currentWorkout.dayName;
+        renderWorkout();
+        showScreen('workout');
+        startWorkoutTimer();
+      } else {
+        showScreen('dashboard');
+      }
     } else {
       showScreen('onboarding');
     }
