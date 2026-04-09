@@ -531,15 +531,24 @@
 
       if (ex.isWarmup && !warmupStarted) {
         warmupStarted = true;
-        container.innerHTML += '<div class="warmup-section-label">Aufwärmen</div>';
+        const lbl = document.createElement('div');
+        lbl.className = 'warmup-section-label';
+        lbl.textContent = 'Aufwärmen';
+        container.appendChild(lbl);
       }
       if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet && !mainStarted) {
         mainStarted = true; num = 0;
-        container.innerHTML += '<div class="main-section-label">Training</div>';
+        const lbl = document.createElement('div');
+        lbl.className = 'main-section-label';
+        lbl.textContent = 'Training';
+        container.appendChild(lbl);
       }
       if (ex.isCooldown && !cooldownStarted) {
         cooldownStarted = true;
-        container.innerHTML += '<div class="cooldown-section-label">Cooldown</div>';
+        const lbl = document.createElement('div');
+        lbl.className = 'cooldown-section-label';
+        lbl.textContent = 'Cooldown';
+        container.appendChild(lbl);
       }
 
       num++;
@@ -663,19 +672,29 @@
 
       if (ex.isWarmup && !warmupStarted) {
         warmupStarted = true;
-        container.innerHTML += '<div class="warmup-section-label">Aufwärmen</div>';
+        const label = document.createElement('div');
+        label.className = 'warmup-section-label';
+        label.textContent = 'Aufwärmen';
+        container.appendChild(label);
       }
       if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet && !mainStarted) {
         mainStarted = true;
-        container.innerHTML += '<div class="main-section-label">Training</div>';
+        const label = document.createElement('div');
+        label.className = 'main-section-label';
+        label.textContent = 'Training';
+        container.appendChild(label);
       }
       if (ex.isCooldown && !cooldownStarted) {
         cooldownStarted = true;
-        container.innerHTML += '<div class="cooldown-section-label">Cooldown / Stretching</div>';
+        const label = document.createElement('div');
+        label.className = 'cooldown-section-label';
+        label.textContent = 'Cooldown / Stretching';
+        container.appendChild(label);
       }
 
       const card = document.createElement('div');
       card.className = 'workout-exercise-card';
+      card.dataset.exIdx = exIdx;
 
       // Last performance hint
       const lastPerf = getLastPerformance(ex.exerciseId);
@@ -699,9 +718,9 @@
           ${hasNote ? `<div class="note-hint">📝 ${hasNote}</div>` : ''}
         </div>
         <div class="workout-ex-actions">
-          <button class="exercise-info-btn">ℹ</button>
+          <button type="button" class="exercise-info-btn">ℹ</button>
           ${!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet ?
-            '<button class="exercise-swap-btn" title="Übung tauschen">🔄</button>' : ''}
+            '<button type="button" class="exercise-swap-btn" title="Übung tauschen">🔄</button>' : ''}
         </div>
       `;
 
@@ -750,6 +769,7 @@
 
           if (!set.completed) {
             const timerBtn = document.createElement('button');
+            timerBtn.type = 'button';
             timerBtn.className = 'btn-timer-start';
             timerBtn.textContent = '⏱ Timer';
             timerBtn.addEventListener('click', () => {
@@ -785,7 +805,10 @@
             repsInput.addEventListener('input', e => { set.reps = +e.target.value; });
 
             inputGroup.appendChild(repsInput);
-            inputGroup.innerHTML += '<span class="set-input-label">Wdh</span>';
+            const repsLabel = document.createElement('span');
+            repsLabel.className = 'set-input-label';
+            repsLabel.textContent = 'Wdh';
+            inputGroup.appendChild(repsLabel);
 
             if (ex.targetWeight) {
               const wInput = document.createElement('input');
@@ -794,7 +817,10 @@
               wInput.value = set.weight || '';
               wInput.addEventListener('input', e => { set.weight = +e.target.value; });
               inputGroup.appendChild(wInput);
-              inputGroup.innerHTML += '<span class="set-input-label">kg</span>';
+              const kgLabel = document.createElement('span');
+              kgLabel.className = 'set-input-label';
+              kgLabel.textContent = 'kg';
+              inputGroup.appendChild(kgLabel);
             }
             row.appendChild(inputGroup);
           } else {
@@ -808,8 +834,9 @@
 
         // Done button
         const doneBtn = document.createElement('button');
+        doneBtn.type = 'button';
         doneBtn.className = 'btn-set-done' + (set.completed ? ' done' : '');
-        doneBtn.innerHTML = '✓';
+        doneBtn.textContent = '✓';
         if (!set.completed) {
           doneBtn.addEventListener('click', () => {
             if (!(exercise.isTimed || ex.targetDuration)) {
@@ -851,7 +878,9 @@
       setTimeout(() => finishWorkout(), 500);
     }
 
-    container.innerHTML += '<div style="height:100px"></div>';
+    const spacer = document.createElement('div');
+    spacer.style.height = '100px';
+    container.appendChild(spacer);
   }
 
   function maybeShowRestTimer(entry, exIdx, setIdx) {
@@ -1266,6 +1295,107 @@
     });
 
     document.getElementById('btn-back-plan').addEventListener('click', () => showScreen('dashboard'));
+
+    // Event delegation for workout content (robust fallback for dynamic elements)
+    const workoutContainer = document.getElementById('workout-content');
+    workoutContainer.addEventListener('click', e => {
+      const wo = state.currentWorkout;
+      if (!wo) return;
+
+      const infoBtn = e.target.closest('.exercise-info-btn');
+      const swapBtn = e.target.closest('.exercise-swap-btn');
+      const timerBtn = e.target.closest('.btn-timer-start');
+      const doneBtn = e.target.closest('.btn-set-done');
+
+      // Helper: get exercise index and set index from a clicked element
+      function getExSetIdx(el) {
+        const card = el.closest('.workout-exercise-card');
+        if (!card) return null;
+        const exIdx = parseInt(card.dataset.exIdx);
+        const row = el.closest('.workout-set-row');
+        let setIdx = -1;
+        if (row) {
+          const setsDiv = card.querySelector('.workout-sets');
+          setIdx = Array.from(setsDiv.children).indexOf(row);
+        }
+        return { exIdx, setIdx, card };
+      }
+
+      if (infoBtn) {
+        const info = getExSetIdx(infoBtn);
+        if (info) {
+          const ex = wo.exercises[info.exIdx];
+          if (ex) showExerciseModal(ex.exerciseId);
+        }
+        return;
+      }
+
+      if (swapBtn) {
+        const info = getExSetIdx(swapBtn);
+        if (info) {
+          const ex = wo.exercises[info.exIdx];
+          const usedIds = wo.exercises.map(e => e.exerciseId);
+          const alt = window.Planner.getAlternative(ex.exerciseId, usedIds);
+          if (alt) {
+            ex.exerciseId = alt.id;
+            ex.sets.forEach(s => { s.completed = false; s.reps = null; s.duration = null; });
+            renderWorkout();
+          } else {
+            alert('Keine Alternative verfügbar.');
+          }
+        }
+        return;
+      }
+
+      if (timerBtn) {
+        const info = getExSetIdx(timerBtn);
+        if (info && info.setIdx >= 0) {
+          const ex = wo.exercises[info.exIdx];
+          const exercise = window.getExercise(ex.exerciseId);
+          const set = ex.sets[info.setIdx];
+          if (ex && exercise && set) {
+            openExerciseTimer(exercise.name, ex.targetDuration, finalTime => {
+              set.duration = finalTime;
+              set.completed = true;
+              renderWorkout();
+              maybeShowRestTimer(ex, info.exIdx, info.setIdx);
+            });
+          }
+        }
+        return;
+      }
+
+      if (doneBtn && !doneBtn.classList.contains('done')) {
+        const info = getExSetIdx(doneBtn);
+        if (info && info.setIdx >= 0) {
+          const ex = wo.exercises[info.exIdx];
+          const exercise = window.getExercise(ex.exerciseId);
+          const set = ex.sets[info.setIdx];
+          if (ex && exercise && set) {
+            if (!(exercise.isTimed || ex.targetDuration)) {
+              if (!set.reps) set.reps = ex.targetReps;
+              if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
+            }
+            set.completed = true;
+
+            if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) {
+              if (checkForPR(ex.exerciseId, ex.sets)) {
+                if (!wo.prs.includes(ex.exerciseId)) {
+                  wo.prs.push(ex.exerciseId);
+                  showConfetti();
+                  doneBeep();
+                  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+                }
+              }
+            }
+
+            renderWorkout();
+            maybeShowRestTimer(ex, info.exIdx, info.setIdx);
+          }
+        }
+        return;
+      }
+    });
 
     document.getElementById('btn-quit-workout').addEventListener('click', () => {
       showConfirm('Training abbrechen?', 'Dein Fortschritt geht verloren.', () => {

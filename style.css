@@ -132,6 +132,8 @@ body {
   -webkit-overflow-scrolling: touch;
   display: none;
   padding-top: var(--safe-top);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .screen.active {
@@ -149,9 +151,16 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 8px 0 16px;
+  position: relative;
+  background: var(--bg);
+  z-index: 1;
+}
+
+#screen-plan-detail .screen-header,
+#screen-progress .screen-header,
+#screen-settings .screen-header {
   position: sticky;
   top: 0;
-  background: var(--bg);
   z-index: 10;
 }
 
@@ -691,8 +700,8 @@ input::placeholder {
 }
 
 .exercise-info-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
@@ -703,6 +712,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .exercise-info-btn:active {
@@ -710,6 +720,11 @@ input::placeholder {
 }
 
 /* ── Active Workout ───────────────────────────────────────── */
+
+#workout-content {
+  position: relative;
+  z-index: 1;
+}
 
 .workout-timer-small {
   font-size: 0.85rem;
@@ -769,11 +784,12 @@ input::placeholder {
 .workout-set-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px 12px;
   background: var(--bg);
   border-radius: var(--radius-xs);
-  transition: all 0.2s;
+  transition: background 0.2s, border 0.2s;
 }
 
 .workout-set-row.completed {
@@ -785,7 +801,7 @@ input::placeholder {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-muted);
-  width: 36px;
+  min-width: 36px;
   flex-shrink: 0;
 }
 
@@ -793,11 +809,12 @@ input::placeholder {
   font-size: 0.8rem;
   color: var(--text-light);
   flex: 1;
+  min-width: 0;
 }
 
 .set-input {
-  width: 60px;
-  padding: 8px;
+  width: 52px;
+  padding: 8px 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   font-size: 0.9rem;
@@ -825,8 +842,8 @@ input::placeholder {
 }
 
 .btn-set-done {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: transparent;
@@ -836,8 +853,10 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
   font-size: 1.1rem;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+  touch-action: manipulation;
 }
 
 .btn-set-done.done {
@@ -847,7 +866,7 @@ input::placeholder {
 }
 
 .btn-timer-start {
-  padding: 8px 16px;
+  padding: 10px 16px;
   border: 2px solid var(--primary);
   border-radius: var(--radius-xs);
   background: transparent;
@@ -856,7 +875,9 @@ input::placeholder {
   font-size: 0.85rem;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+  touch-action: manipulation;
 }
 
 .btn-timer-start:active {
@@ -1407,8 +1428,8 @@ input::placeholder {
 }
 
 .exercise-swap-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
@@ -1417,6 +1438,7 @@ input::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 .exercise-swap-btn:active {
