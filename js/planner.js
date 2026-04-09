@@ -411,6 +411,8 @@ window.Planner = (function() {
     generateProgressivePlan,
     getAlternative,
     shouldDeload,
-    KB_WEIGHTS
+    KB_WEIGHTS,
+    _selectExercises: selectExercises,
+    _getStartWeight: getStartWeight
   };
 })();

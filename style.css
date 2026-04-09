@@ -636,6 +636,24 @@ input::placeholder {
   margin-top: 6px;
 }
 
+.plan-detail-selectors {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.plan-detail-selector {
+  flex: 1;
+}
+
+.plan-detail-selector-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
 /* ── Plan Detail Exercises ────────────────────────────────── */
 
 .exercise-list {

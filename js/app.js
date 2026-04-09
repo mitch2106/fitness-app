@@ -510,6 +510,53 @@
 
   // ── Plan Detail ──────────────────────────────────────────
 
+  function regenerateDayExercises(dayIdx, newSplit) {
+    const profile = state.profile;
+    const day = state.plan.days[dayIdx];
+
+    const splitNames = {
+      full_body: { name: 'Full Body', nameDE: 'Ganzkörper' },
+      upper: { name: 'Upper Body', nameDE: 'Oberkörper' },
+      lower: { name: 'Lower Body', nameDE: 'Unterkörper' },
+      push: { name: 'Push', nameDE: 'Drücken' },
+      pull: { name: 'Pull', nameDE: 'Ziehen' },
+      legs: { name: 'Legs', nameDE: 'Beine' }
+    };
+
+    const info = splitNames[newSplit] || splitNames.full_body;
+    day.split = newSplit;
+    day.name = info.name;
+    day.nameDE = info.nameDE;
+
+    const warmupTime = 5, cooldownTime = 4;
+    const minutesPerExercise = profile.goal === 'build_muscle' ? 6 : 5;
+    const availableMinutes = (profile.minutesPerSession || 45) - warmupTime - cooldownTime;
+    const exerciseCount = Math.max(3, Math.min(10, Math.floor(availableMinutes / minutesPerExercise)));
+    const restSec = { lose_weight: 30, build_muscle: 75, general_fitness: 60, tone: 45 }[profile.goal] || 60;
+    const isDeload = day.isDeload;
+
+    const warmup = day.exercises.filter(e => e.isWarmup);
+    const cooldown = day.exercises.filter(e => e.isCooldown);
+    const exercises = window.Planner._selectExercises(newSplit, profile, exerciseCount);
+
+    const repScheme = { lose_weight: { sets: 3, reps: 15 }, build_muscle: { sets: 4, reps: 10 },
+      general_fitness: { sets: 3, reps: 12 }, tone: { sets: 3, reps: 15 } }[profile.goal] || { sets: 3, reps: 12 };
+
+    const newEntries = exercises.map(ex => {
+      const weight = window.Planner._getStartWeight(profile.fitnessLevel, ex);
+      if (ex.isTimed) {
+        const base = ex.defaultDuration || 30;
+        return { exerciseId: ex.id, sets: 3, reps: null, duration: base, weight: null,
+          restSeconds: restSec, isWarmup: false, isCooldown: false, isWarmupSet: false };
+      }
+      return { exerciseId: ex.id, sets: repScheme.sets, reps: repScheme.reps, duration: null,
+        weight: weight, restSeconds: restSec, isWarmup: false, isCooldown: false, isWarmupSet: false };
+    });
+
+    day.exercises = [...warmup, ...newEntries, ...cooldown];
+    savePlan();
+  }
+
   function showPlanDetail(dayIdx) {
     if (!state.plan || !state.plan.days || !state.profile) return;
     const day = state.plan.days[dayIdx];
@@ -518,6 +565,48 @@
     const preferred = getPreferredSorted();
     const assigned = preferred[dayIdx] ? DAY_NAME_MAP[preferred[dayIdx]] : null;
     document.getElementById('plan-detail-title').textContent = `${assigned ? assigned + ' — ' : ''}${day.name}`;
+
+    // Day selector
+    const daySelect = document.getElementById('day-select');
+    const currentDayKey = preferred[dayIdx] || '';
+    daySelect.value = currentDayKey;
+    daySelect.onchange = () => {
+      const newDay = daySelect.value;
+      const days = state.profile.preferredDays || [];
+
+      // Remove old assignment for this slot
+      if (currentDayKey && days.includes(currentDayKey)) {
+        state.profile.preferredDays = days.filter(d => d !== currentDayKey);
+      }
+
+      if (newDay) {
+        // If another slot uses this day, swap them
+        const otherIdx = preferred.indexOf(newDay);
+        if (otherIdx >= 0 && otherIdx !== dayIdx && currentDayKey) {
+          // Replace the other slot's day with our old day
+          const pos = state.profile.preferredDays.indexOf(newDay);
+          if (pos >= 0) state.profile.preferredDays[pos] = currentDayKey;
+        } else if (otherIdx >= 0 && otherIdx !== dayIdx) {
+          // Other slot loses its day
+          state.profile.preferredDays = state.profile.preferredDays.filter(d => d !== newDay);
+        }
+
+        if (!state.profile.preferredDays.includes(newDay)) {
+          state.profile.preferredDays.push(newDay);
+        }
+      }
+
+      saveProfile();
+      showPlanDetail(dayIdx);
+    };
+
+    // Split selector
+    const splitSelect = document.getElementById('split-select');
+    splitSelect.value = day.split;
+    splitSelect.onchange = () => {
+      regenerateDayExercises(dayIdx, splitSelect.value);
+      showPlanDetail(dayIdx);
+    };
 
     const container = document.getElementById('plan-detail-exercises');
     container.innerHTML = '';

@@ -222,6 +222,32 @@
         <h2 id="plan-detail-title"></h2>
         <div style="width:40px"></div>
       </div>
+      <div class="plan-detail-selectors">
+        <div class="plan-detail-selector">
+          <label class="plan-detail-selector-label">Trainingstag</label>
+          <select id="day-select" class="select-input">
+            <option value="">– Kein Tag –</option>
+            <option value="mon">Montag</option>
+            <option value="tue">Dienstag</option>
+            <option value="wed">Mittwoch</option>
+            <option value="thu">Donnerstag</option>
+            <option value="fri">Freitag</option>
+            <option value="sat">Samstag</option>
+            <option value="sun">Sonntag</option>
+          </select>
+        </div>
+        <div class="plan-detail-selector">
+          <label class="plan-detail-selector-label">Körperbereich</label>
+          <select id="split-select" class="select-input">
+            <option value="full_body">Ganzkörper</option>
+            <option value="upper">Oberkörper</option>
+            <option value="lower">Unterkörper</option>
+            <option value="push">Drücken (Push)</option>
+            <option value="pull">Ziehen (Pull)</option>
+            <option value="legs">Beine</option>
+          </select>
+        </div>
+      </div>
       <div id="plan-detail-exercises"></div>
       <div class="section" style="padding-bottom:100px">
         <button class="btn btn-primary btn-block btn-large" id="btn-start-workout">
