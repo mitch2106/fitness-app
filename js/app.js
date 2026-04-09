@@ -1344,7 +1344,7 @@
   function applyDarkMode(dark) {
     document.body.classList.toggle('dark', dark);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? '#0F0F1A' : '#1a1a2e';
+    if (meta) meta.content = dark ? '#000000' : '#F2F2F7';
   }
 
   function toggleDarkMode() {

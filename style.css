@@ -1,53 +1,58 @@
 /* ============================================================
-   FitPlan – Fitness Training App Styles
+   FitPlan – Apple Design Language
    ============================================================ */
 
 :root {
-  --primary: #FF6B6B;
-  --primary-dark: #E85D5D;
-  --primary-light: #FF8E8E;
-  --secondary: #4ECDC4;
-  --secondary-dark: #3DBDB5;
-  --accent: #FFE66D;
-  --bg: #F5F5FA;
+  --primary: #007AFF;
+  --primary-dark: #0056D6;
+  --primary-light: #409CFF;
+  --secondary: #34C759;
+  --secondary-dark: #248A3D;
+  --accent: #FF9F0A;
+  --bg: #F2F2F7;
   --bg-card: #FFFFFF;
-  --bg-dark: #1A1A2E;
-  --text: #2D3436;
-  --text-light: #636E72;
-  --text-muted: #B2BEC3;
-  --border: #E8E8EE;
-  --success: #00B894;
-  --danger: #E17055;
-  --warning: #FDCB6E;
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.1);
-  --radius: 16px;
-  --radius-sm: 10px;
-  --radius-xs: 8px;
-  --nav-height: 80px;
+  --bg-secondary: #E5E5EA;
+  --text: #1C1C1E;
+  --text-light: #3A3A3C;
+  --text-muted: #8E8E93;
+  --border: #D1D1D6;
+  --success: #34C759;
+  --danger: #FF3B30;
+  --warning: #FF9F0A;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --radius: 14px;
+  --radius-sm: 12px;
+  --radius-xs: 10px;
+  --nav-height: 84px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --blur-bg: rgba(242, 242, 247, 0.72);
+  --blur-nav: rgba(255, 255, 255, 0.85);
 }
 
 /* ── Dark Mode ────────────────────────────────────────────── */
 
 body.dark {
-  --bg: #0F0F1A;
-  --bg-card: #1A1A2E;
-  --text: #E8E8EE;
-  --text-light: #A0A4B8;
-  --text-muted: #5A5E72;
-  --border: #2A2A40;
-  --shadow: 0 2px 12px rgba(0,0,0,0.3);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.4);
+  --bg: #000000;
+  --bg-card: #1C1C1E;
+  --bg-secondary: #2C2C2E;
+  --text: #F5F5F7;
+  --text-light: #ABABB0;
+  --text-muted: #636366;
+  --border: #38383A;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+  --blur-bg: rgba(0, 0, 0, 0.72);
+  --blur-nav: rgba(28, 28, 30, 0.85);
 }
 
 body.dark .screen-header {
-  background: var(--bg);
+  background: var(--blur-bg);
 }
 
 body.dark .set-input {
-  background: var(--bg);
+  background: var(--bg-secondary);
   color: var(--text);
   border-color: var(--border);
 }
@@ -55,7 +60,7 @@ body.dark .set-input {
 body.dark .screen-content input[type="text"],
 body.dark .screen-content input[type="number"],
 body.dark .screen-content .select-input {
-  background: #12121F;
+  background: var(--bg-secondary);
   border-color: var(--border);
   color: var(--text);
 }
@@ -69,8 +74,8 @@ body.dark .screen-content input[type="range"] {
 }
 
 body.dark .bottom-nav {
-  background: #131322;
-  border-top-color: var(--border);
+  background: var(--blur-nav);
+  border-top-color: rgba(255,255,255,0.08);
 }
 
 body.dark .modal-content {
@@ -82,17 +87,17 @@ body.dark .modal-confirm-content {
 }
 
 body.dark .workout-set-row {
-  background: #12121F;
+  background: var(--bg-secondary);
 }
 
 body.dark .workout-set-row.completed {
-  background: rgba(0, 184, 148, 0.08);
-  border-color: rgba(0, 184, 148, 0.2);
+  background: rgba(52, 199, 89, 0.1);
+  border-color: rgba(52, 199, 89, 0.2);
 }
 
 body.dark .exercise-card.warmup {
-  background: rgba(78, 205, 196, 0.06);
-  border-color: rgba(78, 205, 196, 0.15);
+  background: rgba(52, 199, 89, 0.06);
+  border-color: rgba(52, 199, 89, 0.15);
 }
 
 body.dark .chart-container {
@@ -112,12 +117,13 @@ html, body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Screens ──────────────────────────────────────────────── */
@@ -152,8 +158,10 @@ body {
   justify-content: space-between;
   padding: 8px 0 16px;
   position: relative;
-  background: var(--bg);
+  background: var(--blur-bg);
   z-index: 1;
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 #screen-plan-detail .screen-header,
@@ -165,8 +173,9 @@ body {
 }
 
 .screen-header h2 {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 /* ── Buttons ──────────────────────────────────────────────── */
@@ -182,27 +191,27 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   font-family: inherit;
+  letter-spacing: -0.01em;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: var(--primary);
   color: white;
-  box-shadow: 0 4px 15px rgba(255,107,107,0.3);
 }
-.btn-primary:active { transform: scale(0.97); }
+.btn-primary:active { transform: scale(0.97); opacity: 0.85; }
 
 .btn-secondary {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: rgba(142, 142, 147, 0.12);
+  color: var(--primary);
+  border: none;
 }
-.btn-secondary:active { background: var(--border); }
+.btn-secondary:active { opacity: 0.6; }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-light);
+  color: var(--primary);
 }
 
 .btn-danger {
@@ -211,7 +220,7 @@ body {
 }
 
 .btn-block { width: 100%; }
-.btn-large { padding: 16px 28px; font-size: 1.1rem; }
+.btn-large { padding: 16px 32px; font-size: 1.05rem; border-radius: var(--radius); }
 
 .btn-icon {
   width: 40px;
@@ -226,12 +235,12 @@ body {
   border-radius: 50%;
   transition: background 0.2s;
 }
-.btn-icon:active { background: var(--border); }
+.btn-icon:active { background: rgba(142, 142, 147, 0.12); }
 
 /* ── Onboarding ───────────────────────────────────────────── */
 
 #screen-onboarding {
-  background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+  background: linear-gradient(180deg, #000000 0%, #1C1C1E 100%);
   color: white;
 }
 
@@ -251,12 +260,12 @@ body {
 
 .logo {
   font-size: 2rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  font-weight: 700;
+  background: linear-gradient(135deg, #007AFF, #5AC8FA);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 1px;
+  letter-spacing: -0.02em;
 }
 
 .step-indicator {
@@ -302,7 +311,9 @@ body {
 
 .onboarding-step h2 {
   font-size: 1.6rem;
+  font-weight: 700;
   margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -391,40 +402,41 @@ input::placeholder {
 .slider-wrapper input[type="range"] {
   flex: 1;
   -webkit-appearance: none;
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.15);
   outline: none;
 }
 
 .slider-wrapper input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--primary);
+  background: #FFFFFF;
   cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: none;
+  box-shadow: 0 0.5px 4px rgba(0,0,0,0.12), 0 0.5px 1px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
 }
 
 .screen-content input[type="range"] {
   -webkit-appearance: none;
   width: 100%;
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: var(--border);
   outline: none;
 }
 
 .screen-content input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--primary);
+  background: #FFFFFF;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(255,107,107,0.3);
+  border: none;
+  box-shadow: 0 0.5px 4px rgba(0,0,0,0.12), 0 0.5px 1px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
 }
 
 .slider-value {
@@ -448,20 +460,20 @@ input::placeholder {
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  border: 2px solid rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.04);
   color: white;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 
 .option-card:active,
 .option-card.selected {
   border-color: var(--primary);
-  background: rgba(255,107,107,0.1);
+  background: rgba(0, 122, 255, 0.12);
 }
 
 .option-icon {
@@ -473,7 +485,7 @@ input::placeholder {
 
 .option-title {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   display: block;
 }
 
@@ -496,7 +508,7 @@ input::placeholder {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.04);
   color: white;
   font-size: 0.85rem;
@@ -539,7 +551,8 @@ input::placeholder {
 
 .greeting {
   font-size: 1.6rem;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .stats-row {
@@ -560,13 +573,14 @@ input::placeholder {
 .stat-value {
   display: block;
   font-size: 1.6rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--primary);
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -581,10 +595,12 @@ input::placeholder {
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 600;
   margin-bottom: 12px;
-  color: var(--text);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 /* ── Plan Days List ───────────────────────────────────────── */
@@ -598,31 +614,30 @@ input::placeholder {
 .plan-day-card {
   background: var(--bg-card);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 16px 18px;
   box-shadow: var(--shadow);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-left: 4px solid var(--primary);
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .plan-day-card:active {
   transform: scale(0.98);
+  opacity: 0.85;
 }
 
 .plan-day-card.is-today {
-  border-left-color: var(--secondary);
-  background: linear-gradient(135deg, var(--bg-card), rgba(78, 205, 196, 0.06));
+  background: var(--bg-card);
+  border: 1.5px solid rgba(0, 122, 255, 0.25);
 }
 
 .plan-day-card.completed-today {
-  border-left-color: var(--success);
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .plan-day-name {
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.05rem;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .plan-day-nameDE {
@@ -673,9 +688,9 @@ input::placeholder {
 }
 
 .exercise-card.warmup {
-  background: rgba(78, 205, 196, 0.08);
+  background: rgba(52, 199, 89, 0.06);
   box-shadow: none;
-  border: 1px solid rgba(78, 205, 196, 0.2);
+  border: 1px solid rgba(52, 199, 89, 0.15);
 }
 
 .exercise-num {
@@ -690,10 +705,6 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.exercise-card.warmup .exercise-num {
-  background: var(--secondary);
 }
 
 .exercise-info {
@@ -721,10 +732,10 @@ input::placeholder {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: none;
+  background: rgba(142, 142, 147, 0.12);
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -734,7 +745,7 @@ input::placeholder {
 }
 
 .exercise-info-btn:active {
-  background: var(--border);
+  opacity: 0.6;
 }
 
 /* ── Active Workout ───────────────────────────────────────── */
@@ -752,17 +763,17 @@ input::placeholder {
 }
 
 .workout-progress-bar {
-  height: 4px;
+  height: 3px;
   background: var(--border);
-  border-radius: 2px;
+  border-radius: 1.5px;
   margin-bottom: 20px;
   overflow: hidden;
 }
 
 .workout-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  border-radius: 2px;
+  background: var(--primary);
+  border-radius: 1.5px;
   transition: width 0.3s;
   width: 0%;
 }
@@ -770,9 +781,9 @@ input::placeholder {
 .workout-exercise-card {
   background: var(--bg-card);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 18px;
   box-shadow: var(--shadow);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .workout-ex-header {
@@ -783,14 +794,15 @@ input::placeholder {
 }
 
 .workout-ex-name {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
 }
 
 .workout-ex-nameDE {
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .workout-sets {
@@ -811,13 +823,13 @@ input::placeholder {
 }
 
 .workout-set-row.completed {
-  background: rgba(0, 184, 148, 0.08);
-  border: 1px solid rgba(0, 184, 148, 0.2);
+  background: rgba(52, 199, 89, 0.08);
+  border: 1px solid rgba(52, 199, 89, 0.15);
 }
 
 .set-number {
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-muted);
   min-width: 36px;
   flex-shrink: 0;
@@ -838,7 +850,7 @@ input::placeholder {
   font-size: 0.9rem;
   text-align: center;
   font-family: inherit;
-  background: white;
+  background: var(--bg-card);
   color: var(--text);
   -webkit-appearance: none;
 }
@@ -885,8 +897,8 @@ input::placeholder {
 
 .btn-timer-start {
   padding: 10px 16px;
-  border: 2px solid var(--primary);
-  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--primary);
+  border-radius: 980px;
   background: transparent;
   color: var(--primary);
   font-weight: 600;
@@ -904,21 +916,21 @@ input::placeholder {
 }
 
 .warmup-section-label {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--secondary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
   margin-top: 4px;
 }
 
 .main-section-label {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--primary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
   margin-top: 20px;
 }
@@ -931,7 +943,9 @@ input::placeholder {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(26, 26, 46, 0.95);
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -949,11 +963,12 @@ input::placeholder {
 }
 
 .rest-label {
-  font-size: 1.1rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: rgba(255,255,255,0.5);
   margin-bottom: 24px;
+  font-weight: 600;
 }
 
 .timer-circle {
@@ -977,13 +992,13 @@ input::placeholder {
 .timer-bg {
   fill: none;
   stroke: rgba(255,255,255,0.1);
-  stroke-width: 6;
+  stroke-width: 5;
 }
 
 .timer-progress {
   fill: none;
   stroke: var(--primary);
-  stroke-width: 6;
+  stroke-width: 5;
   stroke-linecap: round;
   stroke-dasharray: 339.292;
   stroke-dashoffset: 0;
@@ -996,8 +1011,9 @@ input::placeholder {
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 3rem;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .timer-value.large {
@@ -1005,79 +1021,76 @@ input::placeholder {
 }
 
 .rest-next {
+  color: rgba(255,255,255,0.6);
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 20px;
-}
-
-.exercise-timer-name {
-  font-size: 1.2rem;
-  font-weight: 700;
   margin-bottom: 24px;
 }
 
 .timer-controls {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
-  align-items: center;
+  margin-top: 24px;
+}
+
+.timer-controls .btn {
+  min-width: 80px;
 }
 
 .timer-controls .btn-ghost {
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.6);
 }
 
-/* ── Workout Complete ─────────────────────────────────────── */
+/* ── Workout Complete ────────────────────────────────────── */
 
 .complete-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   text-align: center;
-  min-height: calc(100vh - var(--nav-height));
-  padding-top: 40px;
+  padding-top: 80px;
 }
 
 .complete-icon {
   font-size: 4rem;
   margin-bottom: 16px;
-  animation: bounceIn 0.5s ease;
-}
-
-@keyframes bounceIn {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
 }
 
 .complete-screen h2 {
   font-size: 2rem;
+  font-weight: 700;
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .complete-stats {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   margin: 24px 0 32px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .complete-stat {
-  text-align: center;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  min-width: 90px;
+  box-shadow: var(--shadow);
 }
 
 .complete-stat-value {
   display: block;
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--primary);
 }
 
 .complete-stat-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  font-weight: 600;
 }
 
 /* ── Progress / History ───────────────────────────────────── */
@@ -1151,19 +1164,21 @@ input::placeholder {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
   position: relative;
   background: var(--bg-card);
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: 20px 20px 0 0;
   padding: 24px 20px calc(var(--safe-bottom) + 24px);
   max-width: 500px;
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .modal-confirm-content {
@@ -1188,7 +1203,8 @@ input::placeholder {
 }
 
 .modal-header h3 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
 .modal-ex-nameDE {
@@ -1206,7 +1222,7 @@ input::placeholder {
 
 .badge {
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 980px;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1214,12 +1230,12 @@ input::placeholder {
 }
 
 .badge-muscle {
-  background: rgba(78, 205, 196, 0.12);
+  background: rgba(52, 199, 89, 0.12);
   color: var(--secondary-dark);
 }
 
 .badge-equipment {
-  background: rgba(255, 107, 107, 0.12);
+  background: rgba(0, 122, 255, 0.12);
   color: var(--primary-dark);
 }
 
@@ -1248,8 +1264,10 @@ input::placeholder {
   bottom: 0;
   left: 0;
   width: 100%;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border);
+  background: var(--blur-nav);
+  border-top: 0.5px solid rgba(0,0,0,0.12);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 calc(var(--safe-bottom) + 8px);
@@ -1266,8 +1284,8 @@ input::placeholder {
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.6rem;
+  font-weight: 500;
   cursor: pointer;
   padding: 4px 16px;
   font-family: inherit;
@@ -1306,17 +1324,17 @@ input::placeholder {
 }
 
 .cal-day.done {
-  background: var(--success);
+  background: var(--primary);
   color: white;
 }
 
 .cal-day.done.today {
-  border-color: var(--success);
+  border-color: var(--primary);
 }
 
 .cal-label {
   display: block;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -1335,7 +1353,7 @@ input::placeholder {
 /* ── Today Workout Card ──────────────────────────────────── */
 
 .today-workout-inner {
-  background: linear-gradient(135deg, var(--primary), #E85D5D);
+  background: linear-gradient(135deg, #007AFF, #5856D6);
   border-radius: var(--radius);
   padding: 22px 20px;
   color: white;
@@ -1343,13 +1361,13 @@ input::placeholder {
 }
 
 .today-workout-inner.done {
-  background: linear-gradient(135deg, var(--success), #00A884);
+  background: linear-gradient(135deg, var(--success), #30D158);
   opacity: 0.8;
 }
 
 .today-label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 6px;
@@ -1358,8 +1376,9 @@ input::placeholder {
 
 .today-name {
   font-size: 1.4rem;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 2px;
+  letter-spacing: -0.02em;
 }
 
 .today-nameDE {
@@ -1372,13 +1391,15 @@ input::placeholder {
   background: rgba(255,255,255,0.2);
   box-shadow: none;
   border: 1px solid rgba(255,255,255,0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 /* ── Deload Badge ────────────────────────────────────────── */
 
 .deload-badge {
-  background: rgba(253, 203, 110, 0.15);
-  border: 1px solid rgba(253, 203, 110, 0.3);
+  background: rgba(255, 159, 10, 0.12);
+  border: 1px solid rgba(255, 159, 10, 0.2);
   color: var(--warning);
   border-radius: var(--radius-xs);
   padding: 10px 14px;
@@ -1391,34 +1412,34 @@ input::placeholder {
 /* ── Cooldown Section ────────────────────────────────────── */
 
 .cooldown-section-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #6C5CE7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #AF52DE;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
   margin-top: 20px;
 }
 
 .exercise-card.cooldown {
-  background: rgba(108, 92, 231, 0.06);
+  background: rgba(175, 82, 222, 0.06);
   box-shadow: none;
-  border: 1px solid rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(175, 82, 222, 0.15);
 }
 
 .exercise-card.cooldown .exercise-num {
-  background: #6C5CE7;
+  background: #AF52DE;
 }
 
 .exercise-card.warmup-set {
-  background: rgba(253, 203, 110, 0.06);
+  background: rgba(255, 159, 10, 0.06);
   box-shadow: none;
-  border: 1px solid rgba(253, 203, 110, 0.2);
+  border: 1px solid rgba(255, 159, 10, 0.15);
 }
 
 .exercise-card.warmup-set .exercise-num {
   background: var(--warning);
-  color: var(--text);
+  color: white;
 }
 
 /* ── Exercise Last Performance ───────────────────────────── */
@@ -1449,8 +1470,8 @@ input::placeholder {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: none;
+  background: rgba(142, 142, 147, 0.12);
   font-size: 0.85rem;
   cursor: pointer;
   display: flex;
@@ -1460,12 +1481,12 @@ input::placeholder {
 }
 
 .exercise-swap-btn:active {
-  background: var(--border);
+  opacity: 0.6;
 }
 
 .warmup-set-badge {
   font-size: 0.7rem;
-  background: rgba(253, 203, 110, 0.2);
+  background: rgba(255, 159, 10, 0.15);
   color: var(--warning);
   padding: 2px 6px;
   border-radius: 4px;
@@ -1506,7 +1527,7 @@ input::placeholder {
 }
 
 body.dark .note-textarea {
-  background: #12121F;
+  background: var(--bg-secondary);
   border-color: var(--border);
   color: var(--text);
 }
@@ -1528,11 +1549,11 @@ body.dark .note-textarea {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
 }
 
 .day-detail-name {
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.05rem;
 }
 
@@ -1557,7 +1578,7 @@ body.dark .note-textarea {
 }
 
 body.dark .day-detail-ex {
-  background: #12121F;
+  background: var(--bg-secondary);
 }
 
 .day-detail-ex-name {
