@@ -42,6 +42,24 @@
   function hapticMedium() { haptic(25); }
   function hapticHeavy() { haptic([50, 30, 50]); }
 
+  // ── Wake Lock ────────────────────────────────────────────
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch(e) {}
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+  // Re-acquire on visibility change (e.g. tab switch back)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.currentWorkout) requestWakeLock();
+  });
+
   // ── Persistence ──────────────────────────────────────────
 
   function save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {} }
@@ -733,7 +751,7 @@
       card.innerHTML = `
         <div class="exercise-num">${num}</div>
         <div class="exercise-info">
-          <div class="exercise-name">${exercise.name}</div>
+          <div class="exercise-name">${exercise.name}${exercise.isUnilateral ? ' <span class="unilateral-badge">pro Seite</span>' : ''}</div>
           <div class="exercise-nameDE">${exercise.nameDE}</div>
           <div class="exercise-meta">${meta}</div>
           ${lastStr ? `<div class="exercise-last">${lastStr}</div>` : ''}
@@ -801,7 +819,8 @@
     };
     const equipMap = {
       bodyweight: 'Körpergewicht', kettlebell: 'Kettlebell', dumbbell: 'Kurzhantel',
-      dip_bars: 'Dip-Barren', pull_up_bar: 'Klimmzugstange', rings: 'Ringe'
+      dip_bars: 'Dip-Barren', pull_up_bar: 'Klimmzugstange', rings: 'Ringe',
+      resistance_band: 'Gymnastikband'
     };
     ex.muscleGroups.forEach(m => { badges.innerHTML += `<span class="badge badge-muscle">${muscleMap[m] || m}</span>`; });
     ex.equipment.forEach(e => { badges.innerHTML += `<span class="badge badge-equipment">${equipMap[e] || e}</span>`; });
@@ -842,6 +861,7 @@
     renderWorkout();
     showScreen('workout');
     startWorkoutTimer();
+    requestWakeLock();
   }
 
   function renderWorkout() {
@@ -898,7 +918,7 @@
       header.className = 'workout-ex-header';
       header.innerHTML = `
         <div>
-          <div class="workout-ex-name">${exercise.name}${ex.isWarmupSet ? ' <span class="warmup-set-badge">Aufwärmsatz</span>' : ''}</div>
+          <div class="workout-ex-name">${exercise.name}${ex.isWarmupSet ? ' <span class="warmup-set-badge">Aufwärmsatz</span>' : ''}${exercise.isUnilateral ? ' <span class="unilateral-badge">pro Seite</span>' : ''}</div>
           <div class="workout-ex-nameDE">${exercise.nameDE}</div>
           ${lastHint}
           ${hasNote ? `<div class="note-hint">📝 ${hasNote}</div>` : ''}
@@ -1009,28 +1029,31 @@
             repsLabel.textContent = 'Wdh';
             inputGroup.appendChild(repsLabel);
 
-            if (ex.targetWeight) {
+            // Weight input (always shown – optional for bodyweight exercises)
+            if (!ex.isWarmup && !ex.isCooldown) {
               const sep = document.createElement('span');
               sep.className = 'set-input-sep';
               inputGroup.appendChild(sep);
 
+              const defaultW = ex.targetWeight || 0;
               const wMinus = document.createElement('button');
               wMinus.type = 'button'; wMinus.className = 'stepper-btn';
               wMinus.textContent = '−';
-              wMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = Math.max(0.5, (set.weight || ex.targetWeight) - 0.5); wInput.value = set.weight; });
+              wMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = Math.max(0, (set.weight || defaultW) - 0.5); wInput.value = set.weight || ''; });
               inputGroup.appendChild(wMinus);
 
               const wInput = document.createElement('input');
-              wInput.type = 'number'; wInput.className = 'set-input';
-              wInput.placeholder = ex.targetWeight; wInput.inputMode = 'decimal'; wInput.step = '0.5';
+              wInput.type = 'number'; wInput.className = 'set-input' + (!ex.targetWeight ? ' set-input-optional' : '');
+              wInput.placeholder = ex.targetWeight || '–';
+              wInput.inputMode = 'decimal'; wInput.step = '0.5';
               wInput.value = set.weight || '';
-              wInput.addEventListener('input', e => { set.weight = +e.target.value; });
+              wInput.addEventListener('input', e => { set.weight = +e.target.value || null; });
               inputGroup.appendChild(wInput);
 
               const wPlus = document.createElement('button');
               wPlus.type = 'button'; wPlus.className = 'stepper-btn';
               wPlus.textContent = '+';
-              wPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = (set.weight || ex.targetWeight) + 0.5; wInput.value = set.weight; });
+              wPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = (set.weight || defaultW) + 0.5; wInput.value = set.weight; });
               inputGroup.appendChild(wPlus);
 
               const kgLabel = document.createElement('span');
@@ -1086,9 +1109,26 @@
       container.appendChild(card);
     });
 
-    // Progress bar
+    // Progress bar + percentage
     const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
+    const pct = Math.round(progress);
     document.getElementById('workout-progress-fill').style.width = progress + '%';
+
+    let progressEl = document.getElementById('workout-progress-text');
+    if (!progressEl) {
+      progressEl = document.createElement('div');
+      progressEl.id = 'workout-progress-text';
+      progressEl.className = 'workout-progress-text';
+      document.querySelector('#screen-workout .workout-progress-bar').insertAdjacentElement('afterend', progressEl);
+    }
+    let motivationText = '';
+    if (pct === 0) motivationText = 'Los geht\'s!';
+    else if (pct < 25) motivationText = `${pct}% – Guter Start!`;
+    else if (pct < 50) motivationText = `${pct}% – Weiter so!`;
+    else if (pct < 75) motivationText = `${pct}% – Über die Hälfte!`;
+    else if (pct < 100) motivationText = `${pct}% – Fast geschafft!`;
+    else motivationText = '100% – Stark! 🎉';
+    progressEl.textContent = motivationText;
 
     // Persist workout progress
     saveCurrentWorkout();
@@ -1249,6 +1289,7 @@
 
   function finishWorkout() {
     stopWorkoutTimer();
+    releaseWakeLock();
     clearInterval(restTimerInterval);
     document.getElementById('rest-overlay').classList.add('hidden');
 
@@ -1587,33 +1628,41 @@
         return;
       }
 
-      if (doneBtn && !doneBtn.classList.contains('done')) {
+      if (doneBtn) {
         const info = getExSetIdx(doneBtn);
         if (info && info.setIdx >= 0) {
           const ex = wo.exercises[info.exIdx];
           const exercise = window.getExercise(ex.exerciseId);
           const set = ex.sets[info.setIdx];
           if (ex && exercise && set) {
-            if (!(exercise.isTimed || ex.targetDuration)) {
-              if (!set.reps) set.reps = ex.targetReps;
-              if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
-            }
-            set.completed = true;
-            hapticMedium();
+            if (set.completed) {
+              // Undo: mark as not completed
+              set.completed = false;
+              hapticLight();
+              renderWorkout();
+            } else {
+              // Complete set
+              if (!(exercise.isTimed || ex.targetDuration)) {
+                if (!set.reps) set.reps = ex.targetReps;
+                if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
+              }
+              set.completed = true;
+              hapticMedium();
 
-            if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) {
-              if (checkForPR(ex.exerciseId, ex.sets)) {
-                if (!wo.prs.includes(ex.exerciseId)) {
-                  wo.prs.push(ex.exerciseId);
-                  showConfetti();
-                  doneBeep();
-                  hapticHeavy();
+              if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) {
+                if (checkForPR(ex.exerciseId, ex.sets)) {
+                  if (!wo.prs.includes(ex.exerciseId)) {
+                    wo.prs.push(ex.exerciseId);
+                    showConfetti();
+                    doneBeep();
+                    hapticHeavy();
+                  }
                 }
               }
-            }
 
-            renderWorkout();
-            maybeShowRestTimer(ex, info.exIdx, info.setIdx);
+              renderWorkout();
+              maybeShowRestTimer(ex, info.exIdx, info.setIdx);
+            }
           }
         }
         return;
@@ -1622,7 +1671,7 @@
 
     document.getElementById('btn-quit-workout').addEventListener('click', () => {
       showConfirm('Training abbrechen?', 'Dein Fortschritt geht verloren.', () => {
-        stopWorkoutTimer(); clearInterval(restTimerInterval); clearInterval(exerciseTimerInterval);
+        stopWorkoutTimer(); releaseWakeLock(); clearInterval(restTimerInterval); clearInterval(exerciseTimerInterval);
         document.getElementById('rest-overlay').classList.add('hidden');
         document.getElementById('exercise-timer-overlay').classList.add('hidden');
         state.currentWorkout = null;
@@ -1713,6 +1762,7 @@
         renderWorkout();
         showScreen('workout');
         startWorkoutTimer();
+        requestWakeLock();
       } else {
         showScreen('dashboard');
       }

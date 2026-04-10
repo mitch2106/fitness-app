@@ -834,6 +834,14 @@ input::placeholder {
   width: 0%;
 }
 
+.workout-progress-text {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
 .workout-exercise-card {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -1562,6 +1570,26 @@ input::placeholder {
   color: var(--secondary);
   font-weight: 600;
   margin-bottom: 8px;
+}
+
+.unilateral-badge {
+  font-size: 0.65rem;
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.set-input-optional {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.set-input-optional:focus {
+  opacity: 1;
+  border-style: solid;
 }
 
 /* ── Workout Exercise Actions ────────────────────────────── */

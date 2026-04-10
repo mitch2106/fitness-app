@@ -4,7 +4,7 @@
 window.Planner = (function() {
 
   const KB_WEIGHTS = [6, 8, 10, 12, 14, 16, 18, 20];
-  const DB_WEIGHT = 5;
+  const DB_WEIGHTS = [2, 3, 5, 7, 10];
 
   function shuffle(arr) {
     const a = [...arr];
@@ -22,7 +22,11 @@ window.Planner = (function() {
   }
 
   function getStartWeight(level, exercise) {
-    if (exercise.equipment.includes('dumbbell')) return DB_WEIGHT;
+    if (exercise.equipment.includes('dumbbell')) {
+      const idx = { beginner: 0, intermediate: 1, advanced: 2 }[level] || 0;
+      return DB_WEIGHTS[Math.min(idx, DB_WEIGHTS.length - 1)];
+    }
+    if (exercise.equipment.includes('resistance_band')) return null;
     if (!exercise.equipment.includes('kettlebell')) return null;
     const idx = { beginner: 0, intermediate: 2, advanced: 4 }[level] || 1;
     return KB_WEIGHTS[Math.min(idx, KB_WEIGHTS.length - 1)];

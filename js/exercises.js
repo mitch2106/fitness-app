@@ -199,13 +199,13 @@ window.EXERCISES = [
     id: 'pull_kb_row', name: 'Kettlebell Row', nameDE: 'Kettlebell-Rudern',
     category: 'upper_pull', equipment: ['kettlebell'], muscleGroups: ['back', 'biceps'],
     description: 'Hinge forward at the hips, one hand on a bench for support. Pull the kettlebell to your hip, squeezing the shoulder blade. Lower with control.',
-    videoSearch: 'kettlebell+row+single+arm+form', isTimed: false, difficulty: 1
+    videoSearch: 'kettlebell+row+single+arm+form', isTimed: false, difficulty: 1, isUnilateral: true
   },
   {
     id: 'pull_db_row', name: 'Dumbbell Row', nameDE: 'Kurzhantel-Rudern',
     category: 'upper_pull', equipment: ['dumbbell'], muscleGroups: ['back', 'biceps'],
     description: 'Same as kettlebell row but with a dumbbell. Hinge forward, pull to hip, squeeze shoulder blade at the top.',
-    videoSearch: 'dumbbell+row+one+arm+proper+form', isTimed: false, difficulty: 1
+    videoSearch: 'dumbbell+row+one+arm+proper+form', isTimed: false, difficulty: 1, isUnilateral: true
   },
   {
     id: 'pull_kb_halo', name: 'Kettlebell Halo', nameDE: 'Kettlebell Halo',
@@ -231,13 +231,13 @@ window.EXERCISES = [
     id: 'lower_lunge', name: 'Lunges', nameDE: 'Ausfallschritte',
     category: 'lower', equipment: ['bodyweight'], muscleGroups: ['quads', 'glutes', 'hamstrings'],
     description: 'Step forward into a deep lunge. Both knees at 90 degrees, back knee just above the floor. Push back to standing. Alternate legs.',
-    videoSearch: 'lunges+proper+form+tutorial', isTimed: false, difficulty: 1
+    videoSearch: 'lunges+proper+form+tutorial', isTimed: false, difficulty: 1, isUnilateral: true
   },
   {
     id: 'lower_kb_lunge', name: 'Kettlebell Lunges', nameDE: 'Kettlebell Ausfallschritte',
     category: 'lower', equipment: ['kettlebell'], muscleGroups: ['quads', 'glutes', 'hamstrings'],
     description: 'Hold a kettlebell in the goblet position or at your sides. Perform lunges with added resistance. Keep torso upright.',
-    videoSearch: 'kettlebell+lunge+proper+form', isTimed: false, difficulty: 2
+    videoSearch: 'kettlebell+lunge+proper+form', isTimed: false, difficulty: 2, isUnilateral: true
   },
   {
     id: 'lower_rdl', name: 'Romanian Deadlift', nameDE: 'Rumänisches Kreuzheben',
@@ -255,7 +255,7 @@ window.EXERCISES = [
     id: 'lower_bulgarian', name: 'Bulgarian Split Squat', nameDE: 'Bulgarische Kniebeuge',
     category: 'lower', equipment: ['bodyweight'], muscleGroups: ['quads', 'glutes'],
     description: 'Rear foot elevated on a bench or chair. Lower into a deep single-leg squat. Keep torso upright. Can add kettlebell for extra resistance.',
-    videoSearch: 'bulgarian+split+squat+proper+form', isTimed: false, difficulty: 2
+    videoSearch: 'bulgarian+split+squat+proper+form', isTimed: false, difficulty: 2, isUnilateral: true
   },
   {
     id: 'lower_glute_bridge', name: 'Glute Bridge', nameDE: 'Gesäßbrücke',
@@ -273,13 +273,13 @@ window.EXERCISES = [
     id: 'lower_single_leg_dl', name: 'Single Leg Deadlift', nameDE: 'Einbeiniges Kreuzheben',
     category: 'lower', equipment: ['kettlebell'], muscleGroups: ['hamstrings', 'glutes', 'core'],
     description: 'Stand on one leg, hold a kettlebell in the opposite hand. Hinge forward while extending the free leg behind you. Return to standing.',
-    videoSearch: 'single+leg+deadlift+kettlebell+form', isTimed: false, difficulty: 2
+    videoSearch: 'single+leg+deadlift+kettlebell+form', isTimed: false, difficulty: 2, isUnilateral: true
   },
   {
     id: 'lower_step_up', name: 'Step-Ups', nameDE: 'Aufsteiger',
     category: 'lower', equipment: ['bodyweight'], muscleGroups: ['quads', 'glutes'],
     description: 'Step onto a sturdy elevated surface. Drive through the heel and stand fully upright. Step back down with control.',
-    videoSearch: 'step+ups+exercise+proper+form', isTimed: false, difficulty: 1
+    videoSearch: 'step+ups+exercise+proper+form', isTimed: false, difficulty: 1, isUnilateral: true
   },
   {
     id: 'lower_kb_deadlift', name: 'Kettlebell Deadlift', nameDE: 'Kettlebell Kreuzheben',
@@ -392,6 +392,44 @@ window.EXERCISES = [
     category: 'compound', equipment: ['kettlebell'], muscleGroups: ['legs', 'shoulders', 'core'],
     description: 'Hold kettlebells in rack position. Squat down, then explosively stand and press the weights overhead in one fluid motion.',
     videoSearch: 'kettlebell+thruster+proper+form', isTimed: false, difficulty: 2
+  },
+  // ── RESISTANCE BAND ─────────────────────────────────────
+  {
+    id: 'band_pull_apart', name: 'Band Pull Apart', nameDE: 'Band auseinanderziehen',
+    category: 'upper_pull', equipment: ['resistance_band'], muscleGroups: ['back', 'shoulders'],
+    description: 'Hold the band with both hands at shoulder width. Pull it apart by squeezing your shoulder blades together. Slowly return.',
+    videoSearch: 'resistance+band+pull+apart+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'band_front_raise', name: 'Band Front Raise', nameDE: 'Band Frontheben',
+    category: 'upper_push', equipment: ['resistance_band'], muscleGroups: ['shoulders'],
+    description: 'Stand on the band, hold ends at thighs. Raise straight arms to shoulder height. Lower with control.',
+    videoSearch: 'resistance+band+front+raise+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'band_squat', name: 'Banded Squat', nameDE: 'Band-Kniebeuge',
+    category: 'lower', equipment: ['resistance_band'], muscleGroups: ['quads', 'glutes'],
+    description: 'Stand on the band, hold ends at shoulders. Squat down keeping knees over toes, stand back up against band resistance.',
+    videoSearch: 'resistance+band+squat+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'band_lat_pulldown', name: 'Band Lat Pulldown', nameDE: 'Band Latzug',
+    category: 'upper_pull', equipment: ['resistance_band'], muscleGroups: ['back', 'biceps'],
+    description: 'Anchor band overhead. Kneel and pull ends down to chest level, squeezing lats. Control the return.',
+    videoSearch: 'resistance+band+lat+pulldown+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'band_glute_kickback', name: 'Band Glute Kickback', nameDE: 'Band Kickback',
+    category: 'lower', equipment: ['resistance_band'], muscleGroups: ['glutes', 'hamstrings'],
+    description: 'On all fours with band around foot and hands. Kick one leg back and up against resistance. Squeeze glute at top.',
+    videoSearch: 'resistance+band+glute+kickback+form', isTimed: false, difficulty: 1,
+    isUnilateral: true
+  },
+  {
+    id: 'band_bicep_curl', name: 'Band Bicep Curl', nameDE: 'Band Bizepscurl',
+    category: 'upper_pull', equipment: ['resistance_band'], muscleGroups: ['biceps'],
+    description: 'Stand on the band, curl ends up toward shoulders. Keep elbows at your sides. Lower slowly.',
+    videoSearch: 'resistance+band+bicep+curl+form', isTimed: false, difficulty: 1
   }
 ];
 
