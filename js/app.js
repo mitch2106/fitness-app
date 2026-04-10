@@ -603,6 +603,8 @@
 
   // ── Week Calendar ────────────────────────────────────────
 
+  let calendarWeekOffset = 0;
+
   function renderWeekCalendar() {
     const cal = document.getElementById('week-calendar');
     if (!cal) return;
@@ -611,7 +613,7 @@
     const now = new Date();
     const startOfWeek = new Date(now);
     const dayOfWeek = now.getDay();
-    startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) + calendarWeekOffset * 7);
     startOfWeek.setHours(0, 0, 0, 0);
 
     const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -635,6 +637,49 @@
 
       cal.appendChild(div);
     }
+
+    // Week label
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const label = document.getElementById('cal-week-label');
+    if (label) {
+      const fmt = d => `${d.getDate()}. ${d.toLocaleDateString('de-DE', { month: 'short' })}`;
+      if (calendarWeekOffset === 0) {
+        label.textContent = 'Diese Woche';
+      } else {
+        label.textContent = `${fmt(startOfWeek)} – ${fmt(endOfWeek)}`;
+      }
+    }
+
+    // Nav button visibility
+    const prevBtn = document.getElementById('cal-prev');
+    const nextBtn = document.getElementById('cal-next');
+    if (nextBtn) nextBtn.style.visibility = calendarWeekOffset >= 0 ? 'hidden' : 'visible';
+    if (prevBtn) prevBtn.style.visibility = 'visible';
+  }
+
+  function initCalendarSwipe() {
+    const cal = document.getElementById('week-calendar');
+    if (!cal) return;
+    let touchStartX = 0;
+
+    cal.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    cal.addEventListener('touchend', e => {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diff) > 50) {
+        calendarWeekOffset += diff > 0 ? -1 : 1;
+        if (calendarWeekOffset > 0) calendarWeekOffset = 0;
+        renderWeekCalendar();
+      }
+    }, { passive: true });
+
+    document.getElementById('cal-prev').addEventListener('click', () => {
+      calendarWeekOffset--;
+      renderWeekCalendar();
+    });
+    document.getElementById('cal-next').addEventListener('click', () => {
+      if (calendarWeekOffset < 0) { calendarWeekOffset++; renderWeekCalendar(); }
+    });
   }
 
   function showDayDetail(dateStr, dayLogs) {
@@ -1960,6 +2005,8 @@
   // ── Event Listeners ──────────────────────────────────────
 
   function initEventListeners() {
+    initCalendarSwipe();
+
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => showScreen(btn.dataset.screen));
     });

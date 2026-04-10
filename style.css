@@ -1415,10 +1415,47 @@ input::placeholder {
 
 /* ── Week Calendar ────────────────────────────────────────── */
 
+.week-calendar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.cal-nav {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 1.4rem;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  touch-action: manipulation;
+  font-family: inherit;
+}
+
+.cal-nav:active {
+  background: rgba(142, 142, 147, 0.12);
+}
+
+.cal-week-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
 .week-calendar {
   display: flex;
   gap: 6px;
-  margin-bottom: 20px;
+  flex: 1;
   justify-content: space-between;
 }
 
