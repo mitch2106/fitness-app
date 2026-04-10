@@ -550,14 +550,21 @@
           <div class="day-detail-exercises">
       `;
 
-      mainExercises.forEach(ex => {
+      const allExercises = log.exercises.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
+      if (allExercises.length === 0) {
+        // Show all exercises if no main ones (shouldn't happen, but safety)
+        log.exercises.forEach(ex => allExercises.push(ex));
+      }
+
+      allExercises.forEach(ex => {
         const exercise = window.getExercise(ex.exerciseId);
         if (!exercise) return;
         const completed = ex.sets.filter(s => s.completed);
-        if (completed.length === 0) return;
 
         let detail = '';
-        if (completed[0].duration) {
+        if (completed.length === 0) {
+          detail = '–';
+        } else if (completed[0].duration) {
           detail = completed.map(s => `${s.duration}s`).join(', ');
         } else if (completed[0].weight) {
           detail = completed.map(s => `${s.reps}× ${s.weight}kg`).join(', ');
@@ -2019,20 +2026,20 @@
       }
       document.getElementById('modal-exercise').classList.add('hidden');
     });
-    document.getElementById('modal-backdrop').addEventListener('click', () => {
-      document.getElementById('modal-close').click();
+    document.getElementById('modal-exercise').addEventListener('click', e => {
+      if (e.target === e.currentTarget) document.getElementById('modal-close').click();
     });
 
-    document.querySelector('.modal-confirm-backdrop').addEventListener('click', () => {
-      document.getElementById('modal-confirm').classList.add('hidden');
+    document.getElementById('modal-confirm').addEventListener('click', e => {
+      if (e.target === e.currentTarget) document.getElementById('modal-confirm').classList.add('hidden');
     });
 
     // Day detail modal
     document.getElementById('day-detail-close').addEventListener('click', () => {
       document.getElementById('modal-day-detail').classList.add('hidden');
     });
-    document.getElementById('day-detail-backdrop').addEventListener('click', () => {
-      document.getElementById('modal-day-detail').classList.add('hidden');
+    document.getElementById('modal-day-detail').addEventListener('click', e => {
+      if (e.target === e.currentTarget) document.getElementById('modal-day-detail').classList.add('hidden');
     });
 
     document.getElementById('progress-exercise-select').addEventListener('change', e => {

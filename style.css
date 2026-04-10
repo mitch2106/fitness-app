@@ -1268,6 +1268,7 @@ input::placeholder {
   background: rgba(0,0,0,0.4);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
+  pointer-events: none;
 }
 
 .modal-content {
