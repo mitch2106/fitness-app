@@ -73,9 +73,35 @@ window.Planner = (function() {
 
   // ── Warm-up ──────────────────────────────────────────────
 
-  function generateWarmup() {
+  function generateWarmup(split) {
     const warmups = window.getExercisesByCategory('warmup');
-    return pick(warmups, 5).map(ex => ({
+
+    // Muscle groups relevant per split
+    const upperMuscles = ['shoulders', 'back', 'core', 'chest'];
+    const lowerMuscles = ['hips', 'legs', 'glutes'];
+
+    let priority, filler;
+    switch (split) {
+      case 'upper': case 'push': case 'pull':
+        priority = warmups.filter(e => e.muscleGroups.some(m => upperMuscles.includes(m)));
+        filler = warmups.filter(e => e.muscleGroups.some(m => lowerMuscles.includes(m) || m === 'full_body'));
+        break;
+      case 'lower': case 'legs':
+        priority = warmups.filter(e => e.muscleGroups.some(m => lowerMuscles.includes(m)));
+        filler = warmups.filter(e => e.muscleGroups.some(m => upperMuscles.includes(m) || m === 'full_body'));
+        break;
+      default: // full_body
+        priority = warmups.filter(e => e.muscleGroups.includes('full_body'));
+        filler = warmups.filter(e => !e.muscleGroups.includes('full_body'));
+        break;
+    }
+
+    // Pick 3 priority + 2 filler, deduplicated
+    const selected = pick(priority, 3);
+    const remaining = filler.filter(e => !selected.includes(e));
+    const result = [...selected, ...pick(remaining, 5 - selected.length)].slice(0, 5);
+
+    return result.map(ex => ({
       exerciseId: ex.id,
       sets: 1,
       reps: ex.isTimed ? null : 10,
@@ -286,7 +312,7 @@ window.Planner = (function() {
     const isDeload = logs ? shouldDeload(logs) : false;
 
     const days = structure.map(day => {
-      const warmup = generateWarmup();
+      const warmup = generateWarmup(day.split);
       const exercises = selectExercises(day.split, profile, exerciseCount);
 
       let exerciseEntries = exercises.map(ex => {
@@ -435,6 +461,7 @@ window.Planner = (function() {
     shouldDeload,
     KB_WEIGHTS,
     _selectExercises: selectExercises,
-    _getStartWeight: getStartWeight
+    _getStartWeight: getStartWeight,
+    _generateWarmup: generateWarmup
   };
 })();

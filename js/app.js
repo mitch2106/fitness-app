@@ -393,6 +393,42 @@
     }
   }
 
+  // ── Cycle Tracking ───────────────────────────────────────
+
+  function getCyclePhase() {
+    const p = state.profile;
+    if (!p || !p.cycleTracking || !p.lastPeriodStart) return null;
+    const start = new Date(p.lastPeriodStart);
+    const now = new Date();
+    const diffDays = Math.floor((now - start) / 86400000);
+    const cycleLen = p.cycleLength || 28;
+    const dayInCycle = ((diffDays % cycleLen) + cycleLen) % cycleLen + 1;
+
+    if (dayInCycle <= 5) return { phase: 'menstruation', day: dayInCycle, icon: '🌙', label: 'Menstruation',
+      tip: 'Hör auf deinen Körper – leichteres Training ist völlig OK.' };
+    if (dayInCycle <= 13) return { phase: 'follicular', day: dayInCycle, icon: '🚀', label: 'Follikelphase',
+      tip: 'Power-Phase! Beste Zeit für schwere Gewichte und neue PRs.' };
+    if (dayInCycle <= 16) return { phase: 'ovulation', day: dayInCycle, icon: '⚡', label: 'Ovulation',
+      tip: 'Peak-Power – aber achte besonders auf saubere Ausführung.' };
+    return { phase: 'luteal', day: dayInCycle, icon: '🧘', label: 'Lutealphase',
+      tip: 'Entspannte Phase – moderate Gewichte, mehr Mobility.' };
+  }
+
+  function renderCycleHint() {
+    const hint = document.getElementById('cycle-hint');
+    if (!hint) return;
+    const phase = getCyclePhase();
+    if (!phase) { hint.classList.add('hidden'); return; }
+    hint.classList.remove('hidden');
+    hint.innerHTML = `
+      <span class="cycle-icon">${phase.icon}</span>
+      <div class="cycle-info">
+        <div class="cycle-label">${phase.label} <span class="cycle-day">Tag ${phase.day}</span></div>
+        <div class="cycle-tip">${phase.tip}</div>
+      </div>
+    `;
+  }
+
   function renderDashboard() {
     if (!state.profile) return;
     if (!state.plan || !state.plan.days || state.plan.days.length === 0) {
@@ -440,6 +476,7 @@
 
     // Rest day / recovery hint
     renderRecoveryHint(logs);
+    renderCycleHint();
 
     // Identify today's workout
     let todayIdx = -1;
@@ -639,7 +676,7 @@
     const restSec = { lose_weight: 30, build_muscle: 75, general_fitness: 60, tone: 45 }[profile.goal] || 60;
     const isDeload = day.isDeload;
 
-    const warmup = day.exercises.filter(e => e.isWarmup);
+    const warmup = window.Planner._generateWarmup(newSplit);
     const cooldown = day.exercises.filter(e => e.isCooldown);
     const exercises = window.Planner._selectExercises(newSplit, profile, exerciseCount);
 
@@ -1767,6 +1804,16 @@
     document.getElementById('set-minutes-val').textContent = p.minutesPerSession || 45;
     document.getElementById('set-rest').value = p.restMode || 'auto';
     document.getElementById('set-equipment').value = p.preferredEquipment || '';
+
+    // Cycle tracking
+    const cycleCheckbox = document.getElementById('set-cycle-tracking');
+    cycleCheckbox.checked = !!p.cycleTracking;
+    document.getElementById('set-cycle-length').value = p.cycleLength || 28;
+    document.getElementById('set-period-start').value = p.lastPeriodStart || '';
+    document.getElementById('cycle-settings-detail').classList.toggle('hidden', !p.cycleTracking);
+    cycleCheckbox.onchange = () => {
+      document.getElementById('cycle-settings-detail').classList.toggle('hidden', !cycleCheckbox.checked);
+    };
   }
 
   function showSettings() { populateSettings(); showScreen('settings'); }
@@ -1784,6 +1831,9 @@
     state.profile.minutesPerSession = +document.getElementById('set-minutes').value;
     state.profile.restMode = document.getElementById('set-rest').value;
     state.profile.preferredEquipment = document.getElementById('set-equipment').value || null;
+    state.profile.cycleTracking = document.getElementById('set-cycle-tracking').checked;
+    state.profile.cycleLength = +document.getElementById('set-cycle-length').value || 28;
+    state.profile.lastPeriodStart = document.getElementById('set-period-start').value || null;
 
     // Track weight change
     if (state.profile.weight !== oldWeight && state.profile.weight > 0) {
