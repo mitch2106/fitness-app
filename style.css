@@ -592,6 +592,12 @@ input::placeholder {
   padding: 14px 10px;
   text-align: center;
   box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.stat-card:active {
+  transform: scale(0.95);
 }
 
 .stat-value {
@@ -1820,6 +1826,52 @@ body.dark .day-detail-ex {
   text-align: right;
   flex-shrink: 0;
   margin-left: 12px;
+}
+
+/* ── Stat Detail Modal ───────────────────────────────────── */
+
+.stat-detail-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.stat-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-xs);
+  margin-bottom: 6px;
+}
+
+body.dark .stat-detail-row {
+  background: var(--bg-secondary);
+}
+
+.stat-detail-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 52px;
+}
+
+.stat-detail-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.stat-detail-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* ── Achievements ────────────────────────────────────────── */

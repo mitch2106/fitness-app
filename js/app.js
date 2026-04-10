@@ -461,11 +461,44 @@
     const deloadBadge = document.getElementById('deload-badge');
     if (deloadBadge) deloadBadge.classList.toggle('hidden', !state.plan.isDeload);
 
-    // Stats
+    // Stats (clickable)
     const logs = state.logs;
-    document.getElementById('stat-streak').textContent = calculateStreak(logs);
+    const streakVal = calculateStreak(logs);
+    document.getElementById('stat-streak').textContent = streakVal;
     document.getElementById('stat-workouts').textContent = logs.length;
     document.getElementById('stat-week').textContent = countThisWeek(logs);
+
+    // Stat card click handlers
+    const statCards = document.querySelectorAll('#stats-row .stat-card');
+    statCards.forEach(c => c.style.cursor = 'pointer');
+
+    statCards[0].onclick = () => {
+      if (streakVal === 0) return;
+      const dates = [...new Set(logs.map(l => new Date(l.date).toDateString()))].sort((a, b) => new Date(b) - new Date(a));
+      const streakLogs = [];
+      let check = new Date(); check.setHours(0,0,0,0);
+      if (dates[0] !== check.toDateString()) { check.setDate(check.getDate() - 1); }
+      for (const d of dates) {
+        if (d === check.toDateString()) { streakLogs.push(...logs.filter(l => new Date(l.date).toDateString() === d)); check.setDate(check.getDate() - 1); }
+        else break;
+      }
+      showStatDetail(`🔥 ${streakVal}-Tage-Streak`, streakLogs);
+    };
+
+    statCards[1].onclick = () => {
+      if (logs.length === 0) return;
+      showStatDetail(`💪 ${logs.length} Workouts insgesamt`, [...logs].reverse().slice(0, 30));
+    };
+
+    statCards[2].onclick = () => {
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+      start.setHours(0,0,0,0);
+      const weekLogs = logs.filter(l => new Date(l.date) >= start);
+      if (weekLogs.length === 0) return;
+      showStatDetail(`📅 Diese Woche: ${weekLogs.length} Workouts`, weekLogs);
+    };
 
     // Week calendar
     renderWeekCalendar();
@@ -528,6 +561,44 @@
       card.addEventListener('click', () => showPlanDetail(idx));
       list.appendChild(card);
     });
+  }
+
+  function showStatDetail(title, logsToShow) {
+    const modal = document.getElementById('modal-day-detail');
+    const content = document.getElementById('day-detail-content');
+
+    let totalDuration = 0, totalSets = 0, totalVolume = 0;
+    logsToShow.forEach(log => {
+      totalDuration += log.duration || 0;
+      log.exercises.forEach(ex => {
+        if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
+        ex.sets.filter(s => s.completed).forEach(s => {
+          totalSets++;
+          if (s.reps && s.weight) totalVolume += s.reps * s.weight;
+        });
+      });
+    });
+
+    let html = `<h3>${title}</h3>`;
+    html += `<div class="stat-detail-summary">
+      <span>${Math.round(totalDuration / 60)} Min. gesamt</span>
+      <span>${totalSets} Sätze</span>
+      ${totalVolume > 0 ? `<span>${Math.round(totalVolume).toLocaleString('de-DE')} kg Volumen</span>` : ''}
+    </div>`;
+
+    logsToShow.forEach(log => {
+      const dateStr = new Date(log.date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+      const min = Math.floor((log.duration || 0) / 60);
+      const sets = log.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+      html += `<div class="stat-detail-row">
+        <span class="stat-detail-date">${dateStr}</span>
+        <span class="stat-detail-name">${log.dayName}</span>
+        <span class="stat-detail-meta">${min} Min. · ${sets} Sets</span>
+      </div>`;
+    });
+
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
   }
 
   // ── Week Calendar ────────────────────────────────────────
