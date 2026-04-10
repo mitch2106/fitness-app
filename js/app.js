@@ -207,6 +207,7 @@
 
     if (id === 'dashboard') renderDashboard();
     if (id === 'progress') renderProgress();
+    if (id === 'achievements') renderAchievements();
     if (id === 'settings') populateSettings();
   }
 
@@ -285,7 +286,7 @@
 
   function updateOnboardingNav() {
     document.getElementById('ob-back').style.visibility = onboardingStep === 1 ? 'hidden' : 'visible';
-    document.getElementById('ob-next').textContent = onboardingStep === totalSteps ? 'Los geht\'s!' : 'Weiter';
+    document.getElementById('ob-next').textContent = onboardingStep === totalSteps ? 'Los geht\u00B4s!' : 'Weiter';
   }
 
   function validateStep(step) {
@@ -373,15 +374,15 @@
     let icon = '';
 
     if (consecutiveDays >= 4 && daysSinceLast === 0) {
-      icon = '⚠️'; message = `${consecutiveDays} Tage in Folge trainiert – gönne dir morgen eine Pause!`;
+      icon = '⚠️'; message = `${consecutiveDays} Tage am Stück – selbst Maschinen brauchen Öl. Morgen Pause!`;
     } else if (daysSinceLast === 0 && consecutiveDays >= 2) {
-      icon = '💪'; message = `${consecutiveDays} Tage am Stück – starke Serie!`;
+      icon = '💪'; message = `${consecutiveDays} Tage am Stück – du bist on fire!`;
     } else if (daysSinceLast >= 2 && daysSinceLast <= 3) {
-      icon = '🔋'; message = `${daysSinceLast} Tage Pause – gut regeneriert, Zeit fürs nächste Training!`;
+      icon = '🔋'; message = `${daysSinceLast} Tage Pause – Akkus geladen. Die Hanteln warten!`;
     } else if (daysSinceLast >= 4 && daysSinceLast <= 7) {
-      icon = '👋'; message = `${daysSinceLast} Tage seit dem letzten Training – heute wieder loslegen?`;
+      icon = '👀'; message = `${daysSinceLast} Tage Funkstille – deine Matte fragt, ob du noch lebst.`;
     } else if (daysSinceLast > 7) {
-      icon = '🔥'; message = `${daysSinceLast} Tage Pause – ein neuer Start ist jederzeit möglich!`;
+      icon = '🔥'; message = `${daysSinceLast} Tage weg – Comeback-Story startet jetzt!`;
     }
 
     if (message) {
@@ -399,13 +400,26 @@
     }
     if (!state.plan) return;
 
-    // Greeting
+    // Greeting (with Easter Eggs)
     const hour = new Date().getHours();
-    let greetTime = hour < 12 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+    const dayOfWeek = new Date().getDay();
+    let greetTime = hour < 12 ? 'Guten Morgen' : hour < 18 ? 'Hey' : 'Guten Abend';
+
+    // Easter Eggs
+    if (hour < 6) greetTime = 'Du Verrückte';
+    else if (dayOfWeek === 5) greetTime = 'Happy Freitag';
+    else if (state.logs.length === 42) greetTime = 'Die Antwort ist 42';
+    else if (dayOfWeek === 1) greetTime = 'Montag = Legday';
+
     document.getElementById('greeting').textContent = `${greetTime}, ${state.profile.name}!`;
 
     const goalNames = { lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', general_fitness: 'Allgemeine Fitness', tone: 'Körper straffen' };
-    document.getElementById('dash-subtitle').textContent = `Ziel: ${goalNames[state.profile.goal] || ''}`;
+    const subtitles = [
+      `Ziel: ${goalNames[state.profile.goal] || ''}`,
+      state.logs.length === 0 ? 'Dein erstes Workout wartet!' : null,
+      state.logs.length === 100 ? '💯 100 Workouts – absolute Legende!' : null,
+    ].filter(Boolean);
+    document.getElementById('dash-subtitle').textContent = subtitles[subtitles.length - 1];
 
     // Deload badge
     const deloadBadge = document.getElementById('deload-badge');
@@ -1121,14 +1135,17 @@
       progressEl.className = 'workout-progress-text';
       document.querySelector('#screen-workout .workout-progress-bar').insertAdjacentElement('afterend', progressEl);
     }
-    let motivationText = '';
-    if (pct === 0) motivationText = 'Los geht\'s!';
-    else if (pct < 25) motivationText = `${pct}% – Guter Start!`;
-    else if (pct < 50) motivationText = `${pct}% – Weiter so!`;
-    else if (pct < 75) motivationText = `${pct}% – Über die Hälfte!`;
-    else if (pct < 100) motivationText = `${pct}% – Fast geschafft!`;
-    else motivationText = '100% – Stark! 🎉';
-    progressEl.textContent = motivationText;
+    const motivations = {
+      0:   ['Auf die Matte, Prinzessin! 👑', 'Dein Schweinehund hat heute frei. Du nicht.', 'Eisen biegt sich nicht von allein!'],
+      25:  [`${pct}% – Läuft bei dir!`, `${pct}% – Aufwärmen war gestern, jetzt wird\'s ernst!`, `${pct}% – Dranbleiben, Süße!`],
+      50:  [`${pct}% – Halbzeit, Baby!`, `${pct}% – Die Hälfte gehört dir!`, `${pct}% – Dein Sofa vermisst dich. Ignorier es.`],
+      75:  [`${pct}% – Du bist eine Maschine!`, `${pct}% – Fast durch, gib alles!`, `${pct}% – Aufgeben? Kennen wir nicht.`],
+      100: ['100% – Kriegerin! 👑🔥', '100% – Das Sofa hat dich verdient!', '100% – Absolut legendär! 🎉']
+    };
+    const bracket = pct === 0 ? 0 : pct < 25 ? 25 : pct < 50 ? 25 : pct < 75 ? 50 : pct < 100 ? 75 : 100;
+    // Pick based on day so it varies but stays consistent within a workout
+    const dayIdx = new Date().getDate() % motivations[bracket].length;
+    progressEl.textContent = motivations[bracket][dayIdx];
 
     // Persist workout progress
     saveCurrentWorkout();
@@ -1326,15 +1343,293 @@
 
     state.currentWorkout = null;
     clearSavedWorkout();
+    checkNewAchievements();
     showScreen('complete');
+  }
+
+  // ── Achievements ─────────────────────────────────────────
+
+  const ACHIEVEMENTS = [
+    { id: 'first_workout', name: 'Erste Schritte', icon: '🏅', desc: 'Erstes Workout abgeschlossen',
+      check: logs => logs.length >= 1, progress: logs => `${Math.min(logs.length, 1)}/1` },
+    { id: 'five_workouts', name: 'Dranbleiberin', icon: '💪', desc: '5 Workouts absolviert',
+      check: logs => logs.length >= 5, progress: logs => `${Math.min(logs.length, 5)}/5` },
+    { id: 'ten_workouts', name: '10er Club', icon: '🔟', desc: '10 Workouts geschafft',
+      check: logs => logs.length >= 10, progress: logs => `${Math.min(logs.length, 10)}/10` },
+    { id: 'streak_7', name: 'Auf Kurs', icon: '🔥', desc: '7-Tage-Streak erreicht',
+      check: logs => calculateMaxStreak(logs) >= 7, progress: logs => `${Math.min(calculateMaxStreak(logs), 7)}/7 Tage` },
+    { id: 'streak_30', name: 'Unaufhaltsam', icon: '⚡', desc: '30-Tage-Streak erreicht',
+      check: logs => calculateMaxStreak(logs) >= 30, progress: logs => `${Math.min(calculateMaxStreak(logs), 30)}/30 Tage` },
+    { id: 'first_pr', name: 'Neuer Rekord', icon: '🏆', desc: 'Ersten PR aufgestellt',
+      check: logs => countTotalPRs(logs) >= 1, progress: logs => `${Math.min(countTotalPRs(logs), 1)}/1` },
+    { id: 'ten_prs', name: 'PR-Jägerin', icon: '🎯', desc: '10 PRs gesammelt',
+      check: logs => countTotalPRs(logs) >= 10, progress: logs => `${Math.min(countTotalPRs(logs), 10)}/10` },
+    { id: 'tonnage_1k', name: 'Tonnage', icon: '🏋️', desc: '1.000 kg Gesamtvolumen bewegt',
+      check: logs => getTotalVolume(logs) >= 1000, progress: logs => `${Math.min(Math.round(getTotalVolume(logs)), 1000)}/ 1.000 kg` },
+    { id: 'tonnage_10k', name: 'Powerhouse', icon: '💎', desc: '10.000 kg Gesamtvolumen',
+      check: logs => getTotalVolume(logs) >= 10000, progress: logs => `${Math.round(getTotalVolume(logs) / 100) / 10}/ 10k kg` },
+    { id: 'variety_20', name: 'Allrounderin', icon: '🌈', desc: '20 verschiedene Übungen gemacht',
+      check: logs => getUniqueExercises(logs) >= 20, progress: logs => `${Math.min(getUniqueExercises(logs), 20)}/20` },
+    { id: 'early_bird', name: 'Frühaufsteherin', icon: '🌅', desc: 'Workout vor 8 Uhr gestartet',
+      check: logs => logs.some(l => new Date(l.date).getHours() < 8), progress: () => '' },
+    { id: 'night_owl', name: 'Nachteule', icon: '🦉', desc: 'Workout nach 20 Uhr gestartet',
+      check: logs => logs.some(l => new Date(l.date).getHours() >= 20), progress: () => '' }
+  ];
+
+  function calculateMaxStreak(logs) {
+    if (logs.length === 0) return 0;
+    const dates = [...new Set(logs.map(l => new Date(l.date).toDateString()))].map(d => new Date(d)).sort((a, b) => a - b);
+    let max = 1, current = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const diff = (dates[i] - dates[i - 1]) / 86400000;
+      if (diff === 1) { current++; max = Math.max(max, current); }
+      else if (diff > 1) current = 1;
+    }
+    return max;
+  }
+
+  function countTotalPRs(logs) {
+    // Count exercises where user has improved over their first logged performance
+    const firstPerf = {};
+    const bestPerf = {};
+    logs.forEach(log => {
+      log.exercises.forEach(ex => {
+        if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
+        ex.sets.filter(s => s.completed).forEach(s => {
+          const vol = (s.reps || 0) * (s.weight || 0);
+          const key = ex.exerciseId;
+          if (!firstPerf[key]) firstPerf[key] = vol || s.duration || 0;
+          if (!bestPerf[key]) bestPerf[key] = 0;
+          const val = vol || s.duration || 0;
+          if (val > bestPerf[key]) bestPerf[key] = val;
+        });
+      });
+    });
+    let prs = 0;
+    Object.keys(firstPerf).forEach(k => {
+      if (bestPerf[k] > firstPerf[k] && firstPerf[k] > 0) prs++;
+    });
+    return prs;
+  }
+
+  function getTotalVolume(logs) {
+    let vol = 0;
+    logs.forEach(log => {
+      log.exercises.forEach(ex => {
+        if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
+        ex.sets.filter(s => s.completed).forEach(s => {
+          if (s.reps && s.weight) vol += s.reps * s.weight;
+        });
+      });
+    });
+    return vol;
+  }
+
+  function getUniqueExercises(logs) {
+    const ids = new Set();
+    logs.forEach(log => {
+      log.exercises.forEach(ex => {
+        if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) ids.add(ex.exerciseId);
+      });
+    });
+    return ids.size;
+  }
+
+  function computeAchievements() {
+    return ACHIEVEMENTS.map(a => ({
+      ...a,
+      earned: a.check(state.logs),
+      progressText: a.progress(state.logs)
+    }));
+  }
+
+  function renderAchievements() {
+    const grid = document.getElementById('achievements-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const achievements = computeAchievements();
+    const earned = achievements.filter(a => a.earned);
+    const locked = achievements.filter(a => !a.earned);
+
+    const summary = document.createElement('div');
+    summary.className = 'achievements-summary';
+    summary.textContent = `${earned.length} von ${achievements.length} freigeschaltet`;
+    grid.appendChild(summary);
+
+    [...earned, ...locked].forEach(a => {
+      const card = document.createElement('div');
+      card.className = 'achievement-card' + (a.earned ? ' earned' : ' locked');
+      card.innerHTML = `
+        <div class="achievement-icon">${a.icon}</div>
+        <div class="achievement-info">
+          <div class="achievement-name">${a.name}</div>
+          <div class="achievement-desc">${a.desc}</div>
+          ${!a.earned && a.progressText ? `<div class="achievement-progress">${a.progressText}</div>` : ''}
+        </div>
+        ${a.earned ? '<div class="achievement-check">✓</div>' : ''}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function checkNewAchievements() {
+    const seen = load('fitplan_seen_achievements') || [];
+    const achievements = computeAchievements();
+    const newOnes = achievements.filter(a => a.earned && !seen.includes(a.id));
+    if (newOnes.length > 0) {
+      showConfetti();
+      hapticHeavy();
+      save('fitplan_seen_achievements', achievements.filter(a => a.earned).map(a => a.id));
+    }
   }
 
   // ── Progress Screen ──────────────────────────────────────
 
   function renderProgress() {
     renderHistory();
+    renderVolumeChart();
+    renderMuscleBalance();
     populateExerciseSelect();
     renderWeightChart();
+  }
+
+  // ── Volume Trends Chart ─────────────────────────────────
+
+  let volumeChart = null;
+  function renderVolumeChart() {
+    const container = document.getElementById('volume-chart-container');
+    const canvas = document.getElementById('volume-chart');
+    if (!canvas) return;
+
+    if (state.logs.length < 2) { container.style.display = 'none'; return; }
+    container.style.display = '';
+
+    // Aggregate volume per week (last 8 weeks)
+    const now = new Date();
+    const weeks = [];
+    for (let w = 7; w >= 0; w--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1) - w * 7);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+
+      let volume = 0;
+      state.logs.forEach(log => {
+        const d = new Date(log.date);
+        if (d >= weekStart && d < weekEnd) {
+          log.exercises.forEach(ex => {
+            if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
+            ex.sets.filter(s => s.completed).forEach(s => {
+              if (s.reps && s.weight) volume += s.reps * s.weight;
+            });
+          });
+        }
+      });
+
+      const label = `${weekStart.getDate()}.${weekStart.getMonth() + 1}`;
+      weeks.push({ label, volume: Math.round(volume) });
+    }
+
+    if (volumeChart) volumeChart.destroy();
+    volumeChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: weeks.map(w => w.label),
+        datasets: [{
+          label: 'Volumen (kg)',
+          data: weeks.map(w => w.volume),
+          backgroundColor: 'rgba(0, 122, 255, 0.6)',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: v => v + ' kg' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ── Muscle Balance Radar Chart ──────────────────────────
+
+  let muscleChart = null;
+  function renderMuscleBalance() {
+    const container = document.getElementById('muscle-balance-container');
+    const canvas = document.getElementById('muscle-chart');
+    if (!canvas) return;
+
+    // Last 28 days
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 28);
+    const recentLogs = state.logs.filter(l => new Date(l.date) >= cutoff);
+
+    if (recentLogs.length < 1) { container.style.display = 'none'; return; }
+    container.style.display = '';
+
+    // Muscle group mapping
+    const groupMap = {
+      chest: 'Brust', shoulders: 'Schultern',
+      back: 'Rücken', biceps: 'Arme', triceps: 'Arme',
+      core: 'Core', obliques: 'Core',
+      quads: 'Beine', hamstrings: 'Beine', calves: 'Beine', legs: 'Beine',
+      glutes: 'Gesäß', hips: 'Gesäß', hip_flexors: 'Gesäß', adductors: 'Beine',
+      full_body: null // distribute to all
+    };
+    const groups = ['Brust', 'Rücken', 'Schultern', 'Arme', 'Core', 'Beine', 'Gesäß'];
+    const counts = {};
+    groups.forEach(g => counts[g] = 0);
+
+    recentLogs.forEach(log => {
+      log.exercises.forEach(ex => {
+        if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
+        const exercise = window.getExercise(ex.exerciseId);
+        if (!exercise) return;
+        const completedSets = ex.sets.filter(s => s.completed).length;
+        if (completedSets === 0) return;
+
+        exercise.muscleGroups.forEach(mg => {
+          if (mg === 'full_body') {
+            groups.forEach(g => counts[g] += completedSets * 0.5);
+          } else {
+            const mapped = groupMap[mg];
+            if (mapped && counts[mapped] !== undefined) counts[mapped] += completedSets;
+          }
+        });
+      });
+    });
+
+    if (muscleChart) muscleChart.destroy();
+    muscleChart = new Chart(canvas, {
+      type: 'radar',
+      data: {
+        labels: groups,
+        datasets: [{
+          label: 'Sets (4 Wochen)',
+          data: groups.map(g => Math.round(counts[g])),
+          backgroundColor: 'rgba(0, 122, 255, 0.15)',
+          borderColor: 'rgba(0, 122, 255, 0.8)',
+          borderWidth: 2,
+          pointBackgroundColor: '#007AFF',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            beginAtZero: true,
+            ticks: { stepSize: 5, display: false },
+            pointLabels: { font: { size: 11, weight: '600' } }
+          }
+        }
+      }
+    });
   }
 
   function renderHistory() {
