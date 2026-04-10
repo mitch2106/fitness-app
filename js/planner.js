@@ -17,6 +17,14 @@ window.Planner = (function() {
 
   function pick(arr, n) { return shuffle(arr).slice(0, n); }
 
+  // Pick with equipment preference: preferred equipment exercises first, fill rest randomly
+  function pickPrefer(arr, n, preferredEquip) {
+    if (!preferredEquip) return pick(arr, n);
+    const preferred = shuffle(arr.filter(e => e.equipment.includes(preferredEquip)));
+    const rest = shuffle(arr.filter(e => !e.equipment.includes(preferredEquip)));
+    return [...preferred, ...rest].slice(0, n);
+  }
+
   function getDifficultyMax(level) {
     return { beginner: 1, intermediate: 2, advanced: 3 }[level] || 2;
   }
@@ -121,6 +129,7 @@ window.Planner = (function() {
 
   function selectExercises(split, profile, exerciseCount) {
     const maxDiff = getDifficultyMax(profile.fitnessLevel);
+    const pref = profile.preferredEquipment || null;
     const all = window.EXERCISES.filter(e =>
       e.category !== 'warmup' && e.category !== 'cooldown' && e.difficulty <= maxDiff
     );
@@ -136,49 +145,50 @@ window.Planner = (function() {
     const lower = byCategory['lower'] || [];
     const core = byCategory['core'] || [];
     const compound = byCategory['compound'] || [];
+    const p = (arr, n) => pickPrefer(arr, n, pref);
 
     let selected = [];
     switch (split) {
       case 'full_body': {
         const n = Math.max(1, Math.floor(exerciseCount / 4));
-        selected = [...pick(push, n), ...pick(pull, n), ...pick(lower, n + 1),
-          ...pick(core, Math.max(1, exerciseCount - n * 3 - 1))];
+        selected = [...p(push, n), ...p(pull, n), ...p(lower, n + 1),
+          ...p(core, Math.max(1, exerciseCount - n * 3 - 1))];
         break;
       }
       case 'upper': {
         const n = Math.max(1, Math.floor(exerciseCount / 3));
-        selected = [...pick(push, n + 1), ...pick(pull, n + 1),
-          ...pick(core, Math.max(1, exerciseCount - (n + 1) * 2))];
+        selected = [...p(push, n + 1), ...p(pull, n + 1),
+          ...p(core, Math.max(1, exerciseCount - (n + 1) * 2))];
         break;
       }
       case 'lower': {
         const n = Math.max(1, Math.floor(exerciseCount * 0.7));
-        selected = [...pick(lower, n), ...pick(core, Math.max(1, exerciseCount - n))];
+        selected = [...p(lower, n), ...p(core, Math.max(1, exerciseCount - n))];
         break;
       }
       case 'push': {
         const n = Math.floor(exerciseCount * 0.65);
         const cn = Math.max(1, Math.floor(exerciseCount * 0.15));
-        selected = [...pick(push, n),
-          ...pick(compound.filter(e => e.muscleGroups.some(m => ['shoulders','chest','triceps','full_body'].includes(m))), cn),
-          ...pick(core, Math.max(1, exerciseCount - n - cn))];
+        selected = [...p(push, n),
+          ...p(compound.filter(e => e.muscleGroups.some(m => ['shoulders','chest','triceps','full_body'].includes(m))), cn),
+          ...p(core, Math.max(1, exerciseCount - n - cn))];
         break;
       }
       case 'pull': {
         const n = Math.floor(exerciseCount * 0.65);
         const cn = Math.max(1, Math.floor(exerciseCount * 0.15));
-        selected = [...pick(pull, n),
-          ...pick(lower.filter(e => e.muscleGroups.some(m => ['hamstrings','back'].includes(m))), cn),
-          ...pick(core, Math.max(1, exerciseCount - n - cn))];
+        selected = [...p(pull, n),
+          ...p(lower.filter(e => e.muscleGroups.some(m => ['hamstrings','back'].includes(m))), cn),
+          ...p(core, Math.max(1, exerciseCount - n - cn))];
         break;
       }
       case 'legs': {
         const n = Math.floor(exerciseCount * 0.75);
-        selected = [...pick(lower, n), ...pick(core, Math.max(1, exerciseCount - n))];
+        selected = [...p(lower, n), ...p(core, Math.max(1, exerciseCount - n))];
         break;
       }
       default:
-        selected = pick(all, exerciseCount);
+        selected = p(all, exerciseCount);
     }
     return selected.slice(0, exerciseCount);
   }
@@ -369,9 +379,13 @@ window.Planner = (function() {
           if (ex.weight !== null && ex.weight > 0) {
             const avgW = perf.avgWeight.reduce((a, b) => a + b, 0) / perf.avgWeight.length;
             const exercise = window.getExercise(ex.exerciseId);
-            if (exercise && exercise.equipment.includes('kettlebell')) {
-              const nextW = KB_WEIGHTS.find(w => w > avgW);
-              if (nextW) ex.weight = nextW;
+            if (exercise) {
+              const weights = exercise.equipment.includes('kettlebell') ? KB_WEIGHTS
+                : exercise.equipment.includes('dumbbell') ? DB_WEIGHTS : null;
+              if (weights) {
+                const nextW = weights.find(w => w > avgW);
+                if (nextW) ex.weight = nextW;
+              }
             }
           } else if (ex.reps !== null) {
             ex.reps = Math.min(20, ex.reps + 2);
@@ -382,9 +396,13 @@ window.Planner = (function() {
           if (ex.weight !== null && ex.weight > 0) {
             const avgW = perf.avgWeight.reduce((a, b) => a + b, 0) / perf.avgWeight.length;
             const exercise = window.getExercise(ex.exerciseId);
-            if (exercise && exercise.equipment.includes('kettlebell')) {
-              const prevW = [...KB_WEIGHTS].reverse().find(w => w < avgW);
-              if (prevW) ex.weight = prevW;
+            if (exercise) {
+              const weights = exercise.equipment.includes('kettlebell') ? KB_WEIGHTS
+                : exercise.equipment.includes('dumbbell') ? DB_WEIGHTS : null;
+              if (weights) {
+                const prevW = [...weights].reverse().find(w => w < avgW);
+                if (prevW) ex.weight = prevW;
+              }
             }
           } else if (ex.reps !== null) {
             ex.reps = Math.max(6, ex.reps - 2);

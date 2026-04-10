@@ -1464,6 +1464,7 @@
     document.getElementById('set-minutes').value = p.minutesPerSession || 45;
     document.getElementById('set-minutes-val').textContent = p.minutesPerSession || 45;
     document.getElementById('set-rest').value = p.restMode || 'auto';
+    document.getElementById('set-equipment').value = p.preferredEquipment || '';
   }
 
   function showSettings() { populateSettings(); showScreen('settings'); }
@@ -1480,6 +1481,7 @@
     state.profile.daysPerWeek = +document.getElementById('set-days').value;
     state.profile.minutesPerSession = +document.getElementById('set-minutes').value;
     state.profile.restMode = document.getElementById('set-rest').value;
+    state.profile.preferredEquipment = document.getElementById('set-equipment').value || null;
 
     // Track weight change
     if (state.profile.weight !== oldWeight && state.profile.weight > 0) {
