@@ -601,7 +601,7 @@
         'Mobility ist Selbstliebe. Und Selbstliebe ist nie verkehrt. 💅',
         'Selbst dein Hintern braucht mal Aufmerksamkeit. Glute Stretch, los.',
         'Du bist heiß Mäuschen, aber deine Hüften sind kalt. Aufwärmen!',
-        'Splits üben? Fang erstmal mit der Tauben-Dehnung an, Tiger.',
+        'Splits üben? Fang erstmal mit der Tauben-Dehnung an, Wildkatze.',
         'Dein Körper ist ein Tempel. Und heute wird der Tempel gedehnt.',
         'Geschmeidig wie ein Aal – das ist das Ziel. Nicht steif wie ein Brett.',
         'Heute Abend dankt dir dein Rücken. Oder dein Partner. Oder beide.',
