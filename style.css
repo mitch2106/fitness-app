@@ -1444,12 +1444,35 @@ input::placeholder {
   background: rgba(142, 142, 147, 0.12);
 }
 
+.cal-week-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .cal-week-label {
-  text-align: center;
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 600;
-  margin-bottom: 16px;
+}
+
+.cal-today-btn {
+  padding: 3px 12px;
+  border: none;
+  border-radius: 980px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+.cal-today-btn:active {
+  opacity: 0.7;
 }
 
 .week-calendar {
@@ -1614,6 +1637,29 @@ input::placeholder {
 .today-workout-inner.done {
   background: linear-gradient(135deg, var(--success), #30D158);
   opacity: 0.8;
+}
+
+.today-workout-inner.mobility-day {
+  background: linear-gradient(135deg, #34C759, #5AC8FA);
+}
+
+.btn-mobility-alt {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-mobility-alt:active {
+  color: var(--primary);
 }
 
 .today-label {

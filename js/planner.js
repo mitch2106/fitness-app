@@ -464,6 +464,29 @@ window.Planner = (function() {
     return alternatives.length > 0 ? shuffle(alternatives)[0] : null;
   }
 
+  // ── Mobility Session ─────────────────────────────────────
+
+  function generateMobilitySession() {
+    const mobility = window.EXERCISES.filter(e => e.category === 'mobility');
+    const cooldowns = window.getExercisesByCategory('cooldown');
+    const all = [...mobility, ...cooldowns];
+
+    // Pick 8 exercises, prioritize mobility category
+    const selected = [...pick(mobility, 5), ...pick(cooldowns, 3)];
+
+    return selected.map(ex => ({
+      exerciseId: ex.id,
+      sets: 1,
+      reps: null,
+      duration: ex.defaultDuration || 30,
+      weight: null,
+      restSeconds: 5,
+      isWarmup: false,
+      isCooldown: false,
+      isWarmupSet: false
+    }));
+  }
+
   return {
     generatePlan,
     generateProgressivePlan,
@@ -472,6 +495,7 @@ window.Planner = (function() {
     KB_WEIGHTS,
     _selectExercises: selectExercises,
     _getStartWeight: getStartWeight,
-    _generateWarmup: generateWarmup
+    _generateWarmup: generateWarmup,
+    generateMobilitySession
   };
 })();

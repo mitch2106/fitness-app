@@ -108,6 +108,56 @@ window.EXERCISES = [
     videoSearch: 'supine+twist+stretch', isTimed: true, defaultDuration: 25, difficulty: 1
   },
 
+  // ── MOBILITY ─────────────────────────────────────────────
+  {
+    id: 'mob_cat_cow_flow', name: 'Cat-Cow Flow', nameDE: 'Katze-Kuh Fluss',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['back', 'core', 'hips'],
+    description: 'On all fours, slowly arch your back (cow) then round it (cat) in a continuous flowing motion. Sync with your breath – inhale cow, exhale cat.',
+    videoSearch: 'cat+cow+flow+mobility', isTimed: true, defaultDuration: 60, difficulty: 1
+  },
+  {
+    id: 'mob_90_90', name: '90/90 Hip Switch', nameDE: '90/90 Hüftwechsel',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['hips', 'glutes'],
+    description: 'Sit on the floor, both knees at 90°. Rotate both knees to the other side in a windshield wiper motion. Keep torso tall.',
+    videoSearch: '90+90+hip+switch+mobility', isTimed: true, defaultDuration: 45, difficulty: 1
+  },
+  {
+    id: 'mob_thoracic_rotation', name: 'Thoracic Rotation', nameDE: 'Brustwirbel-Rotation',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['back', 'core'],
+    description: 'On all fours, place one hand behind your head. Rotate your upper back to open the elbow toward the ceiling, then close down. Do both sides.',
+    videoSearch: 'thoracic+spine+rotation+mobility', isTimed: true, defaultDuration: 40, difficulty: 1, isUnilateral: true
+  },
+  {
+    id: 'mob_ankle_circles', name: 'Ankle Circles', nameDE: 'Fußkreisen',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['calves', 'legs'],
+    description: 'Stand on one foot or sit. Circle the other ankle slowly in both directions. Improves ankle mobility for squats and lunges.',
+    videoSearch: 'ankle+circles+mobility+exercise', isTimed: true, defaultDuration: 30, difficulty: 1, isUnilateral: true
+  },
+  {
+    id: 'mob_band_pass_through', name: 'Shoulder Pass-Through', nameDE: 'Schulter-Durchzug',
+    category: 'mobility', equipment: ['resistance_band'], muscleGroups: ['shoulders', 'chest'],
+    description: 'Hold band wide overhead. Keeping arms straight, slowly rotate it behind your back and return. Narrow grip for more stretch.',
+    videoSearch: 'band+shoulder+pass+through+mobility', isTimed: true, defaultDuration: 40, difficulty: 1
+  },
+  {
+    id: 'mob_couch_stretch', name: 'Couch Stretch', nameDE: 'Couch-Dehnung',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['hips', 'quads', 'hip_flexors'],
+    description: 'Kneel facing away from a wall, place one foot against the wall behind you. Step the other foot forward into a lunge. Squeeze glute to deepen the hip flexor stretch.',
+    videoSearch: 'couch+stretch+hip+flexor+mobility', isTimed: true, defaultDuration: 45, difficulty: 1, isUnilateral: true
+  },
+  {
+    id: 'mob_scorpion_stretch', name: 'Scorpion Stretch', nameDE: 'Skorpion-Dehnung',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['hips', 'back', 'chest'],
+    description: 'Lie face down, arms out to the sides. Lift one leg and rotate it across your body to touch the floor on the opposite side. Alternate sides.',
+    videoSearch: 'scorpion+stretch+mobility', isTimed: true, defaultDuration: 40, difficulty: 1, isUnilateral: true
+  },
+  {
+    id: 'mob_deep_squat_hold', name: 'Deep Squat Hold', nameDE: 'Tiefe Hocke',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['hips', 'legs', 'back'],
+    description: 'Sink into a deep squat with feet flat. Hold the bottom position, gently pushing knees out with your elbows. Breathe and relax into it.',
+    videoSearch: 'deep+squat+hold+mobility', isTimed: true, defaultDuration: 45, difficulty: 1
+  },
+
   // ── UPPER BODY – PUSH ────────────────────────────────────
   {
     id: 'push_pushup', name: 'Push-Ups', nameDE: 'Liegestütze',

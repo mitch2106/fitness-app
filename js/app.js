@@ -529,12 +529,24 @@
           <div class="today-nameDE">${day.nameDE} · ${mainExCount} Übungen</div>
           ${doneToday ? '' : '<button class="btn btn-primary btn-block" id="btn-start-today">Training starten</button>'}
         </div>
+        ${!doneToday ? '<button class="btn-mobility-alt" id="btn-mobility-alt">🧘 Lieber Mobility heute?</button>' : ''}
       `;
       if (!doneToday) {
         todayCard.querySelector('#btn-start-today').addEventListener('click', () => startWorkout(todayIdx));
+        todayCard.querySelector('#btn-mobility-alt').addEventListener('click', () => startMobilitySession());
       }
     } else {
-      todayCard.classList.add('hidden');
+      // Rest day → show mobility card
+      todayCard.classList.remove('hidden');
+      todayCard.innerHTML = `
+        <div class="today-workout-inner mobility-day">
+          <div class="today-label">🧘 Ruhetag</div>
+          <div class="today-name">Mobility & Stretching</div>
+          <div class="today-nameDE">Dehnung, Beweglichkeit & Recovery · ~12 Min.</div>
+          <button class="btn btn-primary btn-block" id="btn-start-mobility">Session starten</button>
+        </div>
+      `;
+      todayCard.querySelector('#btn-start-mobility').addEventListener('click', () => startMobilitySession());
     }
 
     // Plan days list
@@ -654,8 +666,10 @@
     // Nav button visibility
     const prevBtn = document.getElementById('cal-prev');
     const nextBtn = document.getElementById('cal-next');
+    const todayBtn = document.getElementById('cal-today-btn');
     if (nextBtn) nextBtn.style.visibility = calendarWeekOffset >= 0 ? 'hidden' : 'visible';
     if (prevBtn) prevBtn.style.visibility = 'visible';
+    if (todayBtn) todayBtn.classList.toggle('hidden', calendarWeekOffset === 0);
   }
 
   function initCalendarSwipe() {
@@ -679,6 +693,9 @@
     });
     document.getElementById('cal-next').addEventListener('click', () => {
       if (calendarWeekOffset < 0) { calendarWeekOffset++; renderWeekCalendar(); }
+    });
+    document.getElementById('cal-today-btn').addEventListener('click', () => {
+      calendarWeekOffset = 0; renderWeekCalendar();
     });
   }
 
@@ -1011,6 +1028,28 @@
   }
 
   // ── Active Workout ───────────────────────────────────────
+
+  function startMobilitySession() {
+    const exercises = window.Planner.generateMobilitySession();
+    state.currentWorkout = {
+      dayIndex: -1, dayName: 'Mobility & Stretching',
+      exercises: exercises.map(ex => ({
+        exerciseId: ex.exerciseId,
+        isWarmup: false, isCooldown: false, isWarmupSet: false,
+        targetSets: ex.sets, targetReps: ex.reps, targetDuration: ex.duration,
+        targetWeight: null, restSeconds: ex.restSeconds,
+        sets: [{ reps: null, weight: null, duration: null, completed: false }]
+      })),
+      startedAt: new Date().toISOString(),
+      prs: []
+    };
+
+    document.getElementById('workout-title').textContent = 'Mobility & Stretching';
+    renderWorkout();
+    showScreen('workout');
+    startWorkoutTimer();
+    requestWakeLock();
+  }
 
   function startWorkout(dayIdx) {
     if (!state.plan || !state.plan.days) return;
@@ -2021,9 +2060,22 @@
         ? 'Du hast in den letzten 4 Wochen viel trainiert! Der neue Plan wird eine Deload-Woche mit reduzierter Intensität.'
         : 'Möchtest du einen neuen Plan generieren? Der aktuelle wird ersetzt.';
       showConfirm('Neuer Trainingsplan', msg, () => {
+        // Remember custom splits from current plan
+        const oldSplits = state.plan && state.plan.days ? state.plan.days.map(d => d.split) : null;
+
         state.plan = state.logs.length > 0
           ? window.Planner.generateProgressivePlan(state.profile, state.logs, state.plan)
           : window.Planner.generatePlan(state.profile, state.logs);
+
+        // Restore custom splits if day count matches
+        if (oldSplits && state.plan.days.length === oldSplits.length) {
+          oldSplits.forEach((split, idx) => {
+            if (split !== state.plan.days[idx].split) {
+              regenerateDayExercises(idx, split);
+            }
+          });
+        }
+
         savePlan();
         renderDashboard();
       });
