@@ -182,7 +182,9 @@
   // ── Navigation ───────────────────────────────────────────
 
   let previousScreen = null;
-  function showScreen(id) {
+  let navigatingBack = false;
+
+  function showScreen(id, skipHistory) {
     const slideScreens = ['plan-detail', 'settings'];
     const slideUpScreens = ['workout', 'complete'];
 
@@ -198,6 +200,11 @@
     previousScreen = state.activeScreen;
     state.activeScreen = id;
 
+    // Push browser history for back button support
+    if (!skipHistory && !navigatingBack) {
+      history.pushState({ screen: id }, '', '');
+    }
+
     const nav = document.getElementById('bottom-nav');
     nav.classList.toggle('hidden', ['onboarding', 'workout', 'complete'].includes(id));
 
@@ -210,6 +217,49 @@
     if (id === 'achievements') renderAchievements();
     if (id === 'settings') populateSettings();
   }
+
+  // Handle Android/browser back button
+  window.addEventListener('popstate', e => {
+    // Close any open modal first
+    const openModal = document.querySelector('.modal:not(.hidden)');
+    if (openModal) {
+      openModal.classList.add('hidden');
+      history.pushState({ screen: state.activeScreen }, '', '');
+      return;
+    }
+
+    // Close rest/exercise timer overlay
+    const restOverlay = document.getElementById('rest-overlay');
+    const exOverlay = document.getElementById('exercise-timer-overlay');
+    if (restOverlay && !restOverlay.classList.contains('hidden')) {
+      clearInterval(restTimerInterval);
+      restOverlay.classList.add('hidden');
+      history.pushState({ screen: state.activeScreen }, '', '');
+      return;
+    }
+    if (exOverlay && !exOverlay.classList.contains('hidden')) {
+      closeExerciseTimer(null);
+      history.pushState({ screen: state.activeScreen }, '', '');
+      return;
+    }
+
+    // Navigate back between screens
+    navigatingBack = true;
+    const current = state.activeScreen;
+
+    if (current === 'dashboard' || current === 'onboarding') {
+      // At home screen → let the browser/app close
+      return;
+    } else if (current === 'workout') {
+      // In workout → confirm before leaving
+      history.pushState({ screen: 'workout' }, '', '');
+      document.getElementById('btn-quit-workout').click();
+    } else {
+      // All other screens → go to dashboard
+      showScreen('dashboard', true);
+    }
+    navigatingBack = false;
+  });
 
   // ── Onboarding ───────────────────────────────────────────
 
@@ -2280,8 +2330,9 @@
   function init() {
     loadState();
     initDarkMode();
-    initOnboarding(); // Always init onboarding listeners
+    initOnboarding();
     initEventListeners();
+    history.replaceState({ screen: 'dashboard' }, '', '');
 
     const isOnboarded = load(STORAGE_KEYS.onboarded);
     if (isOnboarded && state.profile) {
