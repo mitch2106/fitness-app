@@ -157,6 +157,30 @@ window.EXERCISES = [
     description: 'Sink into a deep squat with feet flat. Hold the bottom position, gently pushing knees out with your elbows. Breathe and relax into it.',
     videoSearch: 'deep+squat+hold+mobility', isTimed: true, defaultDuration: 45, difficulty: 1
   },
+  {
+    id: 'mob_neck_circles', name: 'Neck Circles', nameDE: 'Nackenkreisen',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['shoulders'],
+    description: 'Langsam den Kopf im Halbkreis von einer Schulter zur anderen rollen (nicht nach hinten). Dann Kopf zur Seite neigen und sanft mit der Hand nachhelfen. Beide Seiten.',
+    videoSearch: 'neck+circles+stretch+mobility', isTimed: true, defaultDuration: 40, difficulty: 1
+  },
+  {
+    id: 'mob_neck_flexion', name: 'Neck Flexion Stretch', nameDE: 'Nacken-Dehnung',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['shoulders', 'back'],
+    description: 'Hände hinter dem Kopf verschränken, Kinn sanft zur Brust ziehen. Die Dehnung im Nacken und oberen Rücken spüren. Nicht drücken, nur das Eigengewicht der Hände nutzen.',
+    videoSearch: 'neck+flexion+stretch+upper+trap', isTimed: true, defaultDuration: 30, difficulty: 1
+  },
+  {
+    id: 'mob_wrist_circles', name: 'Wrist Circles', nameDE: 'Handgelenkkreisen',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['shoulders'],
+    description: 'Finger verschränken und die Handgelenke langsam in beide Richtungen kreisen. Dann Handflächen nach vorne drücken und halten. Wichtig vor Kettlebell-Training.',
+    videoSearch: 'wrist+circles+mobility+warmup', isTimed: true, defaultDuration: 30, difficulty: 1
+  },
+  {
+    id: 'mob_wrist_flexor', name: 'Wrist Flexor Stretch', nameDE: 'Unterarm-Dehnung',
+    category: 'mobility', equipment: ['bodyweight'], muscleGroups: ['shoulders'],
+    description: 'Arm ausstrecken, Handfläche nach oben. Mit der anderen Hand die Finger sanft nach unten ziehen. Dehnung im Unterarm spüren. Beide Seiten.',
+    videoSearch: 'wrist+flexor+stretch+forearm', isTimed: true, defaultDuration: 25, difficulty: 1, isUnilateral: true
+  },
 
   // ── UPPER BODY – PUSH ────────────────────────────────────
   {
