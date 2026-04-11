@@ -90,6 +90,10 @@ window.Planner = (function() {
         priority = warmups.filter(e => e.muscleGroups.some(m => lowerMuscles.includes(m)));
         filler = warmups.filter(e => e.muscleGroups.some(m => upperMuscles.includes(m) || m === 'full_body'));
         break;
+      case 'core':
+        priority = warmups.filter(e => e.muscleGroups.some(m => ['core', 'back', 'hips'].includes(m)));
+        filler = warmups.filter(e => e.muscleGroups.includes('full_body'));
+        break;
       default: // full_body
         priority = warmups.filter(e => e.muscleGroups.includes('full_body'));
         filler = warmups.filter(e => !e.muscleGroups.includes('full_body'));
@@ -211,6 +215,12 @@ window.Planner = (function() {
       case 'legs': {
         const n = Math.floor(exerciseCount * 0.75);
         selected = [...p(lower, n), ...p(core, Math.max(1, exerciseCount - n))];
+        break;
+      }
+      case 'core': {
+        const n = Math.floor(exerciseCount * 0.75);
+        const rest = Math.max(1, exerciseCount - n);
+        selected = [...p(core, n), ...p(compound, rest)];
         break;
       }
       default:

@@ -777,7 +777,8 @@
       lower: { name: 'Lower Body', nameDE: 'Unterkörper' },
       push: { name: 'Push', nameDE: 'Drücken' },
       pull: { name: 'Pull', nameDE: 'Ziehen' },
-      legs: { name: 'Legs', nameDE: 'Beine' }
+      legs: { name: 'Legs', nameDE: 'Beine' },
+      core: { name: 'Core', nameDE: 'Core & Bauch' }
     };
 
     const info = splitNames[newSplit] || splitNames.full_body;

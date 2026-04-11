@@ -362,6 +362,43 @@ window.EXERCISES = [
     videoSearch: 'kettlebell+windmill+proper+form', isTimed: false, difficulty: 3
   },
 
+  {
+    id: 'core_hollow_hold', name: 'Hollow Body Hold', nameDE: 'Hohlkörperhalten',
+    category: 'core', equipment: ['bodyweight'], muscleGroups: ['core'],
+    description: 'Lie on your back, press lower back into the floor. Extend arms overhead and legs out, lifting both slightly off the ground. Hold this banana shape.',
+    videoSearch: 'hollow+body+hold+proper+form', isTimed: true, defaultDuration: 25, difficulty: 1
+  },
+  {
+    id: 'core_v_up', name: 'V-Ups', nameDE: 'V-Ups',
+    category: 'core', equipment: ['bodyweight'], muscleGroups: ['core', 'hip_flexors'],
+    description: 'Lie flat, simultaneously lift legs and torso to touch your toes at the top. Lower with control. Keep legs as straight as possible.',
+    videoSearch: 'v+ups+exercise+proper+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'core_bear_crawl', name: 'Bear Crawl', nameDE: 'Bärenkrabbeln',
+    category: 'core', equipment: ['bodyweight'], muscleGroups: ['core', 'shoulders'],
+    description: 'On all fours with knees hovering just above the ground. Crawl forward by moving opposite hand and foot together. Keep back flat.',
+    videoSearch: 'bear+crawl+exercise+proper+form', isTimed: true, defaultDuration: 30, difficulty: 1
+  },
+  {
+    id: 'core_band_pallof', name: 'Pallof Press', nameDE: 'Pallof Press',
+    category: 'core', equipment: ['resistance_band'], muscleGroups: ['core', 'obliques'],
+    description: 'Anchor the band at chest height. Hold with both hands at chest, press straight out and resist rotation. Hold briefly, return. Do both sides.',
+    videoSearch: 'pallof+press+resistance+band+form', isTimed: false, difficulty: 1, isUnilateral: true
+  },
+  {
+    id: 'core_kb_halo', name: 'Kettlebell Halo', nameDE: 'Kettlebell Halo',
+    category: 'core', equipment: ['kettlebell'], muscleGroups: ['core', 'shoulders'],
+    description: 'Hold a kettlebell upside down at chest level. Circle it around your head in a smooth motion. Keep core tight and hips stable. Alternate directions.',
+    videoSearch: 'kettlebell+halo+exercise+form', isTimed: false, difficulty: 1
+  },
+  {
+    id: 'core_band_woodchop', name: 'Band Woodchop', nameDE: 'Band Holzhacker',
+    category: 'core', equipment: ['resistance_band'], muscleGroups: ['core', 'obliques'],
+    description: 'Anchor band low. Pull diagonally from low to high across your body with straight arms, rotating your torso. Control the return. Do both sides.',
+    videoSearch: 'resistance+band+woodchop+form', isTimed: false, difficulty: 1, isUnilateral: true
+  },
+
   // ── FULL BODY / COMPOUND ─────────────────────────────────
   {
     id: 'comp_burpee', name: 'Burpees', nameDE: 'Burpees',
