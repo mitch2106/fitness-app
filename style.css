@@ -1643,6 +1643,14 @@ input::placeholder {
   background: linear-gradient(135deg, #34C759, #5AC8FA);
 }
 
+.rest-day-quote {
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.85;
+  margin: 10px 0 14px;
+  line-height: 1.4;
+}
+
 .btn-mobility-alt {
   display: block;
   width: 100%;

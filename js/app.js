@@ -586,13 +586,68 @@
         todayCard.querySelector('#btn-mobility-alt').addEventListener('click', () => startMobilitySession());
       }
     } else {
-      // Rest day → show mobility card
+      // Rest day → show mobility card with daily motivation
+      const restDayQuotes = [
+        'Muskeln wachsen auf dem Sofa, nicht im Gym. Also Hose aus und dehnen.',
+        'Dein Körper ist heiß, Mäuschen – aber nur weil alles entzündet ist. Dehn dich.',
+        'Stretching ist wie Vorspiel. Keiner will\'s, aber danach läuft\'s besser.',
+        'Ruhetag heißt nicht: den ganzen Tag flach liegen. Das ist für heute Nacht.',
+        'Deine Faszien sind verklebter als deine Ex. Kümmere dich drum.',
+        'Wer nicht dehnt, wird steif. Und nicht auf die gute Art. 😏',
+        'Heute darfst du stöhnen. Beim Dehnen natürlich.',
+        'Rest Day Queen. 👑 Komm Mäuschen, mach die Beine breit – für den Couch Stretch.',
+        'Regeneration ist wie Netflix & Chill – aber für deine Muskeln.',
+        'Dein Muskelkater findet dich geil. Zeig ihm, wer hier Boss ist.',
+        'Mobility ist Selbstliebe. Und Selbstliebe ist nie verkehrt. 💅',
+        'Selbst dein Hintern braucht mal Aufmerksamkeit. Glute Stretch, los.',
+        'Du bist heiß Mäuschen, aber deine Hüften sind kalt. Aufwärmen!',
+        'Splits üben? Fang erstmal mit der Tauben-Dehnung an, Tiger.',
+        'Dein Körper ist ein Tempel. Und heute wird der Tempel gedehnt.',
+        'Geschmeidig wie ein Aal – das ist das Ziel. Nicht steif wie ein Brett.',
+        'Heute Abend dankt dir dein Rücken. Oder dein Partner. Oder beide.',
+        'Die beste Position? Die, die du nach dem Stretching halten kannst.',
+        'Du musst nicht kommen. Also zum Training. Dehnen reicht heute.',
+        'Flex mal was anderes als deine Muskeln. Zum Beispiel deine Hüften.',
+        'Deine Oberschenkel sind enger als dein Terminkalender. Fix das.',
+        'Wenn du dich nicht dehnst, dehnst du nur die Wahrheit über deine Fitness.',
+        'Pigeon Pose sieht komisch aus, fühlt sich aber göttlich an. Trust me.',
+        'Dein Beckenboden will auch mal beachtet werden. Nur so als Tipp.',
+        'Heute ist Beweglichkeits-Tag. Morgen profitiert das ganze Schlafzimmer.',
+        'Dein Nacken ist verspannter als du nach dem dritten Glas Wein.',
+        'Die tiefe Hocke ist nicht nur fürs Klo. Üb sie.',
+        'Wenn du beim Schuhe-Binden stöhnst, brauchst du das hier. Dringend.',
+        'Dein Körper ist wie eine Beziehung – ohne Pflege wird\'s steif und unbeweglich.',
+        'Happy End? Gibt\'s nur mit warmem Cool-Down. 💆‍♀️',
+        'Dehnen ist billiger als Physiotherapie. Und weniger peinlich.',
+        'Deine Hüftbeuger sitzen den ganzen Tag. Die brauchen Liebe.',
+        'Wer sich nicht bewegt, rostet. Und Rost ist nicht sexy.',
+        'Heute ölen wir die Gelenke. Kein Witz, mach die Kreise.',
+        'Dein Foam Roller wartet. Er ist der Einzige, der dich heute rollen darf.',
+        'Leg dich hin und mach die Beine hoch, Mäuschen. Für die Dehnung. Wofür denn sonst?',
+        'Mobility ist wie guter Sex – regelmäßig und mit voller Hingabe.',
+        'Auch Ruhetage haben einen G-Punkt: den Gluteus. Dehn ihn.',
+        'Cat-Cow ist nicht das Einzige, was du auf allen Vieren machen solltest.',
+        'Dein Körper schreit nach Aufmerksamkeit, Mäuschen. Gib sie ihm. Heute sanft.',
+        'Steife Schultern? Das kommt vom vielen Handy. Und von sonst nix. Klar.',
+        'Die Kobra-Dehnung ist wie aufwachen nach einer guten Nacht. Nur besser.',
+        'Deine Muskeln haben gestern geliefert, Mäuschen. Heute werden sie verwöhnt.',
+        'Beweglichkeit ist Freiheit. Freiheit ist geil. Also: Dehnen!',
+        'Dein innerer Schweinehund macht heute Yoga. Mach mit.',
+        'Ruhetag-Motto: langsam, tief, kontrolliert. Wie beim... Atmen natürlich.',
+        'Wer geschmeidig ist, hat mehr vom Leben, Mäuschen. In jeder Hinsicht. 😘',
+        'Dein Rücken ist krummer als deine Ausreden. Streck dich mal.',
+        'Heute wird nicht geschwitzt, sondern geseufzt. Vor Erleichterung.',
+        'Deine Hüften lügen nicht, Mäuschen – und die sagen: DEHN MICH.',
+      ];
+      const quoteIdx = Math.floor(new Date().getTime() / 86400000) % restDayQuotes.length;
+
       todayCard.classList.remove('hidden');
       todayCard.innerHTML = `
         <div class="today-workout-inner mobility-day">
           <div class="today-label">🧘 Ruhetag</div>
           <div class="today-name">Mobility & Stretching</div>
           <div class="today-nameDE">Dehnung, Beweglichkeit & Recovery · ~12 Min.</div>
+          <div class="rest-day-quote">${restDayQuotes[quoteIdx]}</div>
           <button class="btn btn-primary btn-block" id="btn-start-mobility">Session starten</button>
         </div>
       `;
