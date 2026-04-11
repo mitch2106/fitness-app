@@ -592,7 +592,7 @@
         'Dein Körper ist heiß, Mäuschen – aber nur weil alles entzündet ist. Dehn dich.',
         'Stretching ist wie Vorspiel. Keiner will\'s, aber danach läuft\'s besser.',
         'Ruhetag heißt nicht: den ganzen Tag flach liegen. Das ist für heute Nacht.',
-        'Deine Faszien sind verklebter als deine Ex. Kümmere dich drum.',
+        'Deine Faszien sind verklebter als altes Kaugummi. Kümmere dich drum.',
         'Wer nicht dehnt, wird steif. Und nicht auf die gute Art. 😏',
         'Heute darfst du stöhnen. Beim Dehnen natürlich.',
         'Rest Day Queen. 👑 Komm Mäuschen, mach die Beine breit – für den Couch Stretch.',
