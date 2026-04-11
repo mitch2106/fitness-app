@@ -1922,21 +1922,28 @@
     const labels = state.weightLog.map(e => new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
     const values = state.weightLog.map(e => e.weight);
 
+    // Wider Y-axis range so small changes don't look dramatic
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const padding = Math.max(3, (maxVal - minVal) * 0.5);
+    const yMin = Math.floor(minVal - padding);
+    const yMax = Math.ceil(maxVal + padding);
+
     canvas._chart = new Chart(canvas, {
       type: 'line',
       data: {
         labels,
         datasets: [{
           label: 'Gewicht (kg)', data: values,
-          borderColor: '#4ECDC4', backgroundColor: 'rgba(78,205,196,0.1)',
-          fill: true, tension: 0.3, pointBackgroundColor: '#4ECDC4', pointRadius: 5
+          borderColor: '#34C759', backgroundColor: 'rgba(52,199,89,0.08)',
+          fill: true, tension: 0.3, pointBackgroundColor: '#34C759', pointRadius: 5
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: true,
         plugins: { legend: { display: false } },
         scales: {
-          y: { grid: { color: 'rgba(0,0,0,0.05)' } },
+          y: { min: yMin, max: yMax, ticks: { callback: v => v + ' kg' }, grid: { color: 'rgba(0,0,0,0.05)' } },
           x: { grid: { display: false } }
         }
       }
