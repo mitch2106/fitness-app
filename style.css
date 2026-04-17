@@ -1201,14 +1201,164 @@ input::placeholder {
   gap: 8px;
 }
 
+/* ── Quick Log Buttons ───────────────────────────────────── */
+
+.quick-log-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.quick-log-btn {
+  flex: 1;
+  background: var(--bg-card);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.quick-log-btn:active {
+  opacity: 0.6;
+  transform: scale(0.97);
+}
+
+.quick-log-icon {
+  font-size: 1.2rem;
+}
+
+/* ── Steps Widget ────────────────────────────────────────── */
+
+.steps-widget {
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.steps-widget:active {
+  opacity: 0.8;
+}
+
+.steps-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.steps-ring-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.steps-info {
+  flex: 1;
+}
+
+.steps-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.steps-value {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.steps-edit-btn {
+  background: rgba(142, 142, 147, 0.12);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+  color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+/* ── Strength Test (Onboarding) ──────────────────────────── */
+
+.strength-test-info {
+  background: rgba(255,255,255,0.05);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.strength-test-current h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.strength-test-input {
+  margin: 16px 0;
+}
+
+.strength-test-input label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 6px;
+}
+
+.strength-test-input input {
+  width: 100%;
+}
+
+#strength-test-runner .timer-circle {
+  margin: 16px auto;
+}
+
+/* ── History Item ────────────────────────────────────────── */
+
 .history-item {
   background: var(--bg-card);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
   box-shadow: var(--shadow);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.history-icon {
+  font-size: 1.3rem;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .history-date {

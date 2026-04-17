@@ -151,6 +151,55 @@
         </div>
       </div>
 
+      <!-- Step 6: Strength Test (optional) -->
+      <div class="onboarding-step" data-step="6">
+        <h2>Krafttest</h2>
+        <p class="subtitle">Optional: Damit wir deinen Plan auf dein Level zuschneiden. Du kannst den Test auch überspringen.</p>
+
+        <div id="strength-test-intro">
+          <div class="strength-test-info">
+            <p>Der Test besteht aus 3 klassischen Übungen:</p>
+            <ul style="list-style:none;padding-left:0;margin:12px 0">
+              <li>💪 Maximale Liegestütze (auf Knien erlaubt)</li>
+              <li>🦵 Maximale Kniebeugen in 1 Minute</li>
+              <li>🧘 Plank so lange wie möglich halten</li>
+            </ul>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.85rem">Insgesamt ca. 5 Minuten.</p>
+          </div>
+          <div class="option-cards" style="margin-top:16px">
+            <button class="option-card" id="ob-test-start" type="button">
+              <span class="option-icon">🎯</span>
+              <span class="option-title">Test jetzt machen</span>
+              <span class="option-desc">3 Übungen, ca. 5 Minuten</span>
+            </button>
+            <button class="option-card" id="ob-test-skip" type="button">
+              <span class="option-icon">⏭️</span>
+              <span class="option-title">Überspringen</span>
+              <span class="option-desc">Ich mache den Test später in den Einstellungen</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="strength-test-runner" class="hidden">
+          <div class="strength-test-current">
+            <h3 id="strength-test-name"></h3>
+            <p id="strength-test-instructions" style="margin:8px 0 20px;color:rgba(255,255,255,0.7);font-size:0.9rem"></p>
+          </div>
+          <div class="timer-circle">
+            <svg viewBox="0 0 120 120">
+              <circle class="timer-bg" cx="60" cy="60" r="54"/>
+              <circle class="timer-progress" id="strength-test-progress" cx="60" cy="60" r="54"/>
+            </svg>
+            <span class="timer-value" id="strength-test-value">60</span>
+          </div>
+          <div class="strength-test-input">
+            <label id="strength-test-label"></label>
+            <input type="number" id="strength-test-result" inputmode="numeric" min="0" max="500" placeholder="0">
+          </div>
+          <button class="btn btn-primary btn-block btn-large" id="strength-test-next" type="button">Weiter</button>
+        </div>
+      </div>
+
       <div class="onboarding-nav">
         <button class="btn btn-ghost" id="ob-back">Zurück</button>
         <button class="btn btn-primary" id="ob-next">Weiter</button>
@@ -190,6 +239,19 @@
           <span class="stat-label">Diese Woche</span>
         </div>
       </div>
+
+      <div class="quick-log-buttons">
+        <button class="quick-log-btn" id="btn-log-activity" type="button">
+          <span class="quick-log-icon">🚴</span>
+          <span>Aktivität loggen</span>
+        </button>
+        <button class="quick-log-btn" id="btn-log-quick" type="button">
+          <span class="quick-log-icon">⚡</span>
+          <span>Einzel-Übung</span>
+        </button>
+      </div>
+
+      <div class="steps-widget hidden" id="steps-widget"></div>
 
       <div class="week-calendar-wrapper">
         <button class="cal-nav cal-nav-prev" id="cal-prev" type="button">‹</button>
@@ -477,6 +539,20 @@
       </div>
 
       <div class="section">
+        <h3 class="section-title">Schritte</h3>
+        <div class="form-group">
+          <label class="toggle-row">
+            <span>Schritte-Tracking</span>
+            <input type="checkbox" id="set-steps-tracking">
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="set-step-goal">Tagesziel: <span id="set-step-goal-val"></span></label>
+          <input type="range" id="set-step-goal" min="3000" max="20000" step="1000" value="8000">
+        </div>
+      </div>
+
+      <div class="section">
         <h3 class="section-title">Zyklus</h3>
         <div class="form-group">
           <label class="toggle-row">
@@ -555,6 +631,111 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" id="confirm-cancel">Abbrechen</button>
         <button class="btn btn-danger" id="confirm-ok">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ACTIVITY LOG MODAL ═══ -->
+  <div id="modal-activity" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="touch-action:pan-y">
+      <div class="modal-header">
+        <h3>Aktivität loggen</h3>
+        <button class="btn-icon" id="activity-close" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="form-group">
+        <label for="activity-type">Aktivität</label>
+        <select id="activity-type" class="select-input">
+          <option value="cycling">🚴 Fahrradfahren</option>
+          <option value="hiking">🥾 Wandern</option>
+          <option value="walking">🚶 Spazieren</option>
+          <option value="running">🏃 Laufen</option>
+          <option value="swimming">🏊 Schwimmen</option>
+          <option value="yoga">🧘 Yoga</option>
+          <option value="other">🎯 Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="activity-duration">Dauer (Minuten)</label>
+        <input type="number" id="activity-duration" placeholder="45" min="1" max="600" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label for="activity-distance">Distanz (km, optional)</label>
+        <input type="number" id="activity-distance" placeholder="10.5" min="0" step="0.1" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label for="activity-date">Datum</label>
+        <input type="datetime-local" id="activity-date" class="select-input">
+      </div>
+      <div class="form-group">
+        <label for="activity-notes">Notizen (optional)</label>
+        <textarea id="activity-notes" class="note-textarea" rows="2" placeholder="Wie war's?"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="activity-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-primary" id="activity-save" type="button">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ QUICK EXERCISE LOG MODAL ═══ -->
+  <div id="modal-quick-log" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="touch-action:pan-y">
+      <div class="modal-header">
+        <h3>Einzel-Übung loggen</h3>
+        <button class="btn-icon" id="quick-close" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="form-group">
+        <label for="quick-exercise">Übung</label>
+        <select id="quick-exercise" class="select-input"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="quick-sets">Sätze</label>
+          <input type="number" id="quick-sets" value="1" min="1" max="20" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="quick-reps">Wiederholungen</label>
+          <input type="number" id="quick-reps" placeholder="10" min="1" max="500" inputmode="numeric">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="quick-weight">Gewicht (kg, optional)</label>
+        <input type="number" id="quick-weight" placeholder="5" min="0" step="0.5" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label for="quick-date">Datum</label>
+        <input type="datetime-local" id="quick-date" class="select-input">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="quick-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-primary" id="quick-save" type="button">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEPS LOG MODAL ═══ -->
+  <div id="modal-steps" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="touch-action:pan-y">
+      <div class="modal-header">
+        <h3>Schritte eintragen</h3>
+        <button class="btn-icon" id="steps-close" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="form-group">
+        <label for="steps-input">Schritte heute</label>
+        <input type="number" id="steps-input" placeholder="6000" min="0" max="100000" inputmode="numeric">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="steps-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-primary" id="steps-save" type="button">Speichern</button>
       </div>
     </div>
   </div>

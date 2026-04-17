@@ -29,15 +29,28 @@ window.Planner = (function() {
     return { beginner: 1, intermediate: 2, advanced: 3 }[level] || 2;
   }
 
-  function getStartWeight(level, exercise) {
+  function getStartWeight(level, exercise, strengthTest) {
+    // Strength test modifier: shifts weight tier up/down by 1
+    let modifier = 0;
+    if (strengthTest) {
+      // Upper body bias via pushups
+      if (exercise.category === 'upper_push' || exercise.category === 'upper_pull') {
+        if (strengthTest.pushups >= 20) modifier = 1;
+        else if (strengthTest.pushups < 5) modifier = -1;
+      } else if (exercise.category === 'lower') {
+        if (strengthTest.squats >= 40) modifier = 1;
+        else if (strengthTest.squats < 15) modifier = -1;
+      }
+    }
+
     if (exercise.equipment.includes('dumbbell')) {
       const idx = { beginner: 0, intermediate: 1, advanced: 2 }[level] || 0;
-      return DB_WEIGHTS[Math.min(idx, DB_WEIGHTS.length - 1)];
+      return DB_WEIGHTS[Math.max(0, Math.min(DB_WEIGHTS.length - 1, idx + modifier))];
     }
     if (exercise.equipment.includes('resistance_band')) return null;
     if (!exercise.equipment.includes('kettlebell')) return null;
     const idx = { beginner: 0, intermediate: 2, advanced: 4 }[level] || 1;
-    return KB_WEIGHTS[Math.min(idx, KB_WEIGHTS.length - 1)];
+    return KB_WEIGHTS[Math.max(0, Math.min(KB_WEIGHTS.length - 1, idx + modifier))];
   }
 
   function getRepScheme(goal) {
@@ -326,7 +339,7 @@ window.Planner = (function() {
       const exercises = selectExercises(day.split, profile, exerciseCount);
 
       let exerciseEntries = exercises.map(ex => {
-        const weight = getStartWeight(profile.fitnessLevel, ex);
+        const weight = getStartWeight(profile.fitnessLevel, ex, profile.strengthTest);
         let entry;
         if (ex.isTimed) {
           const scheme = getTimedScheme(profile.goal, ex);
@@ -385,7 +398,7 @@ window.Planner = (function() {
     const exercisePerformance = {};
 
     recentLogs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (!exercisePerformance[ex.exerciseId]) {
           exercisePerformance[ex.exerciseId] = { completed: 0, total: 0, avgReps: [], avgWeight: [] };
         }

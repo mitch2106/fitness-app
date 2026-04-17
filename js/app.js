@@ -8,12 +8,13 @@
     profile: 'fitplan_profile', plan: 'fitplan_plan',
     logs: 'fitplan_logs', onboarded: 'fitplan_onboarded',
     darkMode: 'fitplan_darkmode', notes: 'fitplan_notes',
-    weightLog: 'fitplan_weightlog', currentWorkout: 'fitplan_current_workout'
+    weightLog: 'fitplan_weightlog', currentWorkout: 'fitplan_current_workout',
+    stepLog: 'fitplan_step_log'
   };
 
   let state = {
     profile: null, plan: null, logs: [], notes: {},
-    weightLog: [], currentWorkout: null, activeScreen: 'onboarding'
+    weightLog: [], stepLog: [], currentWorkout: null, activeScreen: 'onboarding'
   };
 
   let workoutStartTime = null, workoutElapsedInterval = null;
@@ -71,6 +72,7 @@
     state.logs = load(STORAGE_KEYS.logs) || [];
     state.notes = load(STORAGE_KEYS.notes) || {};
     state.weightLog = load(STORAGE_KEYS.weightLog) || [];
+    state.stepLog = load(STORAGE_KEYS.stepLog) || [];
   }
 
   function saveProfile() { save(STORAGE_KEYS.profile, state.profile); if (window.FireSync) window.FireSync.saveProfile(state.profile); }
@@ -78,6 +80,7 @@
   function saveLogs() { save(STORAGE_KEYS.logs, state.logs); if (window.FireSync) window.FireSync.saveLogs(state.logs); }
   function saveNotes() { save(STORAGE_KEYS.notes, state.notes); if (window.FireSync) window.FireSync.saveNotes(state.notes); }
   function saveWeightLog() { save(STORAGE_KEYS.weightLog, state.weightLog); if (window.FireSync) window.FireSync.saveWeightLog(state.weightLog); }
+  function saveStepLog() { save(STORAGE_KEYS.stepLog, state.stepLog); }
   function saveCurrentWorkout() { save(STORAGE_KEYS.currentWorkout, state.currentWorkout ? { workout: state.currentWorkout, startedAt: workoutStartTime } : null); }
   function clearSavedWorkout() { localStorage.removeItem(STORAGE_KEYS.currentWorkout); }
 
@@ -94,7 +97,7 @@
     let bestDuration = 0;
 
     state.logs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (ex.exerciseId !== exerciseId) return;
         ex.sets.filter(s => s.completed).forEach(s => {
           if (s.weight && s.weight > bestWeight) bestWeight = s.weight;
@@ -124,7 +127,7 @@
   function getLastPerformance(exerciseId) {
     for (let i = state.logs.length - 1; i >= 0; i--) {
       const log = state.logs[i];
-      const ex = log.exercises.find(e => e.exerciseId === exerciseId && !e.isWarmup);
+      const ex = (log.exercises || []).find(e => e.exerciseId === exerciseId && !e.isWarmup);
       if (ex) {
         const completed = ex.sets.filter(s => s.completed);
         if (completed.length > 0) return completed;
@@ -264,12 +267,13 @@
   // ── Onboarding ───────────────────────────────────────────
 
   let onboardingStep = 1;
-  const totalSteps = 5;
+  const totalSteps = 6;
   const onboardingData = {
     name: '', age: null, weight: null, height: null,
     fitnessLevel: null, goal: null,
     daysPerWeek: 3, minutesPerSession: 45,
-    preferredDays: [], restMode: 'auto'
+    preferredDays: [], restMode: 'auto',
+    strengthTest: null
   };
 
   function initOnboarding() {
@@ -314,6 +318,105 @@
 
     document.getElementById('ob-next').addEventListener('click', nextOnboardingStep);
     document.getElementById('ob-back').addEventListener('click', prevOnboardingStep);
+
+    // Strength test
+    document.getElementById('ob-test-start').addEventListener('click', () => startStrengthTest(result => {
+      onboardingData.strengthTest = result;
+      nextOnboardingStep();
+    }));
+    document.getElementById('ob-test-skip').addEventListener('click', () => {
+      onboardingData.strengthTest = null;
+      nextOnboardingStep();
+    });
+  }
+
+  // ── Strength Test ────────────────────────────────────────
+  const STRENGTH_TEST_EXERCISES = [
+    { id: 'pushups', name: 'Liegestütze', instructions: 'Maximale Liegestütze in 60 Sekunden (auf Knien erlaubt).', durationSec: 60, label: 'Geschafft:', unit: 'Reps' },
+    { id: 'squats', name: 'Kniebeugen', instructions: 'Maximale Kniebeugen in 60 Sekunden.', durationSec: 60, label: 'Geschafft:', unit: 'Reps' },
+    { id: 'plank', name: 'Plank', instructions: 'Halte die Plank so lange wie möglich. Timer läuft bis 3 Minuten.', durationSec: 180, label: 'Gehalten:', unit: 'Sekunden', isHold: true }
+  ];
+
+  let strengthTestState = null;
+
+  function startStrengthTest(onComplete) {
+    document.getElementById('strength-test-intro').classList.add('hidden');
+    document.getElementById('strength-test-runner').classList.remove('hidden');
+    strengthTestState = { index: 0, results: {}, onComplete, timerInterval: null, startTime: null };
+    showStrengthTestExercise();
+  }
+
+  function showStrengthTestExercise() {
+    const idx = strengthTestState.index;
+    const ex = STRENGTH_TEST_EXERCISES[idx];
+    document.getElementById('strength-test-name').textContent = `${idx + 1}/3 ${ex.name}`;
+    document.getElementById('strength-test-instructions').textContent = ex.instructions;
+    document.getElementById('strength-test-label').textContent = `${ex.label} (${ex.unit})`;
+    document.getElementById('strength-test-result').value = '';
+    document.getElementById('strength-test-value').textContent = ex.durationSec;
+    document.getElementById('strength-test-next').textContent = idx < 2 ? 'Start' : 'Start';
+
+    const btn = document.getElementById('strength-test-next');
+    btn.onclick = null; // reset
+    btn.onclick = () => runStrengthTestTimer(ex);
+  }
+
+  function runStrengthTestTimer(ex) {
+    const btn = document.getElementById('strength-test-next');
+    const progressEl = document.getElementById('strength-test-progress');
+    const valueEl = document.getElementById('strength-test-value');
+    const circumference = 2 * Math.PI * 54;
+    progressEl.style.strokeDasharray = circumference;
+
+    strengthTestState.startTime = Date.now();
+    btn.textContent = ex.isHold ? 'Stop' : 'Fertig';
+
+    const total = ex.durationSec;
+    clearInterval(strengthTestState.timerInterval);
+    strengthTestState.timerInterval = setInterval(() => {
+      const elapsed = (Date.now() - strengthTestState.startTime) / 1000;
+      const remaining = Math.max(0, total - elapsed);
+      valueEl.textContent = ex.isHold ? Math.floor(elapsed) : Math.ceil(remaining);
+      progressEl.style.strokeDashoffset = circumference * (1 - remaining / total);
+      if (remaining <= 0) {
+        clearInterval(strengthTestState.timerInterval);
+        hapticHeavy(); doneBeep();
+        finishStrengthTestExercise(ex);
+      }
+    }, 100);
+
+    btn.onclick = () => {
+      clearInterval(strengthTestState.timerInterval);
+      finishStrengthTestExercise(ex);
+    };
+  }
+
+  function finishStrengthTestExercise(ex) {
+    const elapsed = (Date.now() - strengthTestState.startTime) / 1000;
+    const inputEl = document.getElementById('strength-test-result');
+    const btn = document.getElementById('strength-test-next');
+    if (ex.isHold) {
+      strengthTestState.results[ex.id] = Math.round(elapsed);
+      inputEl.value = Math.round(elapsed);
+    } else {
+      inputEl.value = '';
+      inputEl.focus();
+    }
+    btn.textContent = 'Weiter';
+    btn.onclick = () => {
+      const val = +inputEl.value;
+      if (isNaN(val) || val < 0) { alert('Bitte Wert eingeben.'); return; }
+      strengthTestState.results[ex.id] = val;
+      strengthTestState.index++;
+      if (strengthTestState.index >= STRENGTH_TEST_EXERCISES.length) {
+        const result = { ...strengthTestState.results, date: new Date().toISOString() };
+        const callback = strengthTestState.onComplete;
+        strengthTestState = null;
+        callback(result);
+      } else {
+        showStrengthTestExercise();
+      }
+    };
   }
 
   function renderStepIndicator() {
@@ -336,7 +439,17 @@
 
   function updateOnboardingNav() {
     document.getElementById('ob-back').style.visibility = onboardingStep === 1 ? 'hidden' : 'visible';
-    document.getElementById('ob-next').textContent = onboardingStep === totalSteps ? 'Los geht\u00B4s!' : 'Weiter';
+    // Step 6 (strength test) has its own buttons, hide the main nav
+    const navBar = document.querySelector('.onboarding-nav');
+    if (onboardingStep === 6) {
+      navBar.style.display = 'none';
+      // Reset test state when entering step
+      document.getElementById('strength-test-intro').classList.remove('hidden');
+      document.getElementById('strength-test-runner').classList.add('hidden');
+    } else {
+      navBar.style.display = '';
+    }
+    document.getElementById('ob-next').textContent = 'Weiter';
   }
 
   function validateStep(step) {
@@ -355,6 +468,7 @@
       case 3: if (!onboardingData.goal) { alert('Bitte wähle dein Trainingsziel.'); return false; } return true;
       case 4: return true;
       case 5: if (!onboardingData.restMode) { alert('Bitte wähle eine Option.'); return false; } return true;
+      case 6: return true; // Strength test is optional
     }
     return true;
   }
@@ -560,6 +674,7 @@
     // Rest day / recovery hint
     renderRecoveryHint(logs);
     renderCycleHint();
+    renderStepsWidget();
 
     // Identify today's workout
     let todayIdx = -1;
@@ -687,7 +802,7 @@
     let totalDuration = 0, totalSets = 0, totalVolume = 0;
     logsToShow.forEach(log => {
       totalDuration += log.duration || 0;
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
         ex.sets.filter(s => s.completed).forEach(s => {
           totalSets++;
@@ -706,7 +821,7 @@
     logsToShow.forEach(log => {
       const dateStr = new Date(log.date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
       const min = Math.floor((log.duration || 0) / 60);
-      const sets = log.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+      const sets = (log.exercises || []).reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
       html += `<div class="stat-detail-row">
         <span class="stat-detail-date">${dateStr}</span>
         <span class="stat-detail-name">${log.dayName}</span>
@@ -716,6 +831,172 @@
 
     content.innerHTML = html;
     modal.classList.remove('hidden');
+  }
+
+  // ── Activity Logging ─────────────────────────────────────
+
+  function formatLocalDatetime(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function openActivityModal() {
+    document.getElementById('activity-type').value = 'cycling';
+    document.getElementById('activity-duration').value = '';
+    document.getElementById('activity-distance').value = '';
+    document.getElementById('activity-notes').value = '';
+    document.getElementById('activity-date').value = formatLocalDatetime(new Date());
+    document.getElementById('modal-activity').classList.remove('hidden');
+  }
+
+  function saveActivity() {
+    const type = document.getElementById('activity-type').value;
+    const duration = +document.getElementById('activity-duration').value;
+    const distance = +document.getElementById('activity-distance').value || null;
+    const dateStr = document.getElementById('activity-date').value;
+    const notes = document.getElementById('activity-notes').value.trim();
+
+    if (!duration || duration < 1) { alert('Bitte Dauer in Minuten eingeben.'); return; }
+
+    const log = {
+      id: 'log_' + Date.now(),
+      date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+      type: 'activity',
+      activityType: type,
+      dayName: ACTIVITY_NAMES[type] || 'Aktivität',
+      duration: duration * 60,
+      distance,
+      notes,
+      exercises: []
+    };
+    state.logs.push(log);
+    saveLogs();
+    hapticMedium();
+    document.getElementById('modal-activity').classList.add('hidden');
+    if (state.activeScreen === 'dashboard') renderDashboard();
+    if (state.activeScreen === 'progress') renderProgress();
+  }
+
+  // ── Quick Exercise Logging ───────────────────────────────
+
+  function openQuickLogModal() {
+    const select = document.getElementById('quick-exercise');
+    select.innerHTML = '';
+    const mainCategories = ['upper_push', 'upper_pull', 'lower', 'core', 'compound'];
+    window.EXERCISES
+      .filter(e => mainCategories.includes(e.category))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(ex => {
+        const opt = document.createElement('option');
+        opt.value = ex.id;
+        opt.textContent = `${ex.name} (${ex.nameDE})`;
+        select.appendChild(opt);
+      });
+
+    document.getElementById('quick-sets').value = '1';
+    document.getElementById('quick-reps').value = '';
+    document.getElementById('quick-weight').value = '';
+    document.getElementById('quick-date').value = formatLocalDatetime(new Date());
+    document.getElementById('modal-quick-log').classList.remove('hidden');
+  }
+
+  function saveQuickLog() {
+    const exerciseId = document.getElementById('quick-exercise').value;
+    const setsCount = +document.getElementById('quick-sets').value || 1;
+    const reps = +document.getElementById('quick-reps').value;
+    const weight = +document.getElementById('quick-weight').value || null;
+    const dateStr = document.getElementById('quick-date').value;
+
+    if (!reps || reps < 1) { alert('Bitte Wiederholungen eingeben.'); return; }
+    const exercise = window.getExercise(exerciseId);
+    if (!exercise) { alert('Bitte Übung wählen.'); return; }
+
+    const totalReps = setsCount * reps;
+    const sets = [];
+    for (let i = 0; i < setsCount; i++) {
+      sets.push({ reps, weight, duration: null, completed: true });
+    }
+
+    const log = {
+      id: 'log_' + Date.now(),
+      date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+      type: 'quick',
+      dayName: `⚡ ${totalReps}× ${exercise.name}`,
+      duration: 0,
+      exercises: [{
+        exerciseId,
+        isWarmup: false, isCooldown: false, isWarmupSet: false,
+        sets
+      }]
+    };
+    state.logs.push(log);
+    saveLogs();
+    hapticMedium();
+    document.getElementById('modal-quick-log').classList.add('hidden');
+    if (state.activeScreen === 'dashboard') renderDashboard();
+    if (state.activeScreen === 'progress') renderProgress();
+  }
+
+  // ── Steps Tracking ───────────────────────────────────────
+
+  function getTodaySteps() {
+    const today = new Date().toDateString();
+    const entry = state.stepLog.find(e => new Date(e.date).toDateString() === today);
+    return entry ? entry.steps : 0;
+  }
+
+  function openStepsModal() {
+    document.getElementById('steps-input').value = getTodaySteps() || '';
+    document.getElementById('modal-steps').classList.remove('hidden');
+    setTimeout(() => document.getElementById('steps-input').focus(), 100);
+  }
+
+  function saveSteps() {
+    const steps = +document.getElementById('steps-input').value;
+    if (isNaN(steps) || steps < 0) { alert('Bitte gültige Zahl eingeben.'); return; }
+    const today = new Date().toDateString();
+    const existing = state.stepLog.findIndex(e => new Date(e.date).toDateString() === today);
+    const entry = { date: new Date().toISOString(), steps };
+    if (existing >= 0) state.stepLog[existing] = entry;
+    else state.stepLog.push(entry);
+    saveStepLog();
+    hapticLight();
+    document.getElementById('modal-steps').classList.add('hidden');
+    renderStepsWidget();
+  }
+
+  function renderStepsWidget() {
+    const widget = document.getElementById('steps-widget');
+    if (!widget) return;
+    if (!state.profile || state.profile.stepsTracking === false) {
+      widget.classList.add('hidden');
+      return;
+    }
+    widget.classList.remove('hidden');
+    const today = getTodaySteps();
+    const goal = state.profile.stepGoal || 8000;
+    const pct = Math.min(100, (today / goal) * 100);
+    const circumference = 2 * Math.PI * 26;
+    const offset = circumference * (1 - pct / 100);
+
+    widget.innerHTML = `
+      <div class="steps-ring">
+        <svg viewBox="0 0 64 64" width="64" height="64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--primary)" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+            transform="rotate(-90 32 32)" style="transition:stroke-dashoffset 0.4s"/>
+        </svg>
+        <div class="steps-ring-num">${today >= 1000 ? Math.round(today/100)/10 + 'k' : today}</div>
+      </div>
+      <div class="steps-info">
+        <div class="steps-label">Schritte heute</div>
+        <div class="steps-value">${today.toLocaleString('de-DE')} / ${goal.toLocaleString('de-DE')}</div>
+      </div>
+      <button class="steps-edit-btn" id="steps-edit" type="button">✎</button>
+    `;
+    widget.onclick = openStepsModal;
   }
 
   // ── Week Calendar ────────────────────────────────────────
@@ -813,7 +1094,25 @@
 
     dayLogs.forEach(log => {
       const min = Math.floor((log.duration || 0) / 60);
-      const mainExercises = log.exercises.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
+      const exList = log.exercises || [];
+
+      // Activity log: show simple header
+      if (log.type === 'activity') {
+        const icon = ACTIVITY_ICONS[log.activityType] || '🎯';
+        const distStr = log.distance ? ` · ${log.distance} km` : '';
+        html += `
+          <div class="day-detail-workout">
+            <div class="day-detail-header">
+              <span class="day-detail-name">${icon} ${log.dayName}</span>
+              <span class="day-detail-meta">${min} Min.${distStr}</span>
+            </div>
+            ${log.notes ? `<div style="font-size:0.85rem;color:var(--text-light);margin-top:4px">${log.notes}</div>` : ''}
+          </div>
+        `;
+        return;
+      }
+
+      const mainExercises = exList.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
       const totalSets = mainExercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
 
       html += `
@@ -825,10 +1124,10 @@
           <div class="day-detail-exercises">
       `;
 
-      const allExercises = log.exercises.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
+      const allExercises = exList.filter(e => !e.isWarmup && !e.isCooldown && !e.isWarmupSet);
       if (allExercises.length === 0) {
         // Show all exercises if no main ones (shouldn't happen, but safety)
-        log.exercises.forEach(ex => allExercises.push(ex));
+        exList.forEach(ex => allExercises.push(ex));
       }
 
       allExercises.forEach(ex => {
@@ -923,7 +1222,7 @@
       general_fitness: { sets: 3, reps: 12 }, tone: { sets: 3, reps: 15 } }[profile.goal] || { sets: 3, reps: 12 };
 
     const newEntries = exercises.map(ex => {
-      const weight = window.Planner._getStartWeight(profile.fitnessLevel, ex);
+      const weight = window.Planner._getStartWeight(profile.fitnessLevel, ex, profile.strengthTest);
       if (ex.isTimed) {
         const base = ex.defaultDuration || 30;
         return { exerciseId: ex.id, sets: 3, reps: null, duration: base, weight: null,
@@ -1698,7 +1997,7 @@
     const firstPerf = {};
     const bestPerf = {};
     logs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
         ex.sets.filter(s => s.completed).forEach(s => {
           const vol = (s.reps || 0) * (s.weight || 0);
@@ -1720,7 +2019,7 @@
   function getTotalVolume(logs) {
     let vol = 0;
     logs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
         ex.sets.filter(s => s.completed).forEach(s => {
           if (s.reps && s.weight) vol += s.reps * s.weight;
@@ -1733,7 +2032,7 @@
   function getUniqueExercises(logs) {
     const ids = new Set();
     logs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) ids.add(ex.exerciseId);
       });
     });
@@ -1823,7 +2122,7 @@
       state.logs.forEach(log => {
         const d = new Date(log.date);
         if (d >= weekStart && d < weekEnd) {
-          log.exercises.forEach(ex => {
+          (log.exercises || []).forEach(ex => {
             if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
             ex.sets.filter(s => s.completed).forEach(s => {
               if (s.reps && s.weight) volume += s.reps * s.weight;
@@ -1890,7 +2189,7 @@
     groups.forEach(g => counts[g] = 0);
 
     recentLogs.forEach(log => {
-      log.exercises.forEach(ex => {
+      (log.exercises || []).forEach(ex => {
         if (ex.isWarmup || ex.isCooldown || ex.isWarmupSet) return;
         const exercise = window.getExercise(ex.exerciseId);
         if (!exercise) return;
@@ -1937,6 +2236,15 @@
     });
   }
 
+  const ACTIVITY_ICONS = {
+    cycling: '🚴', hiking: '🥾', walking: '🚶', running: '🏃',
+    swimming: '🏊', yoga: '🧘', other: '🎯'
+  };
+  const ACTIVITY_NAMES = {
+    cycling: 'Fahrradfahren', hiking: 'Wandern', walking: 'Spazieren',
+    running: 'Laufen', swimming: 'Schwimmen', yoga: 'Yoga', other: 'Aktivität'
+  };
+
   function renderHistory() {
     const list = document.getElementById('history-list');
     list.innerHTML = '';
@@ -1948,9 +2256,23 @@
       const item = document.createElement('div');
       item.className = 'history-item';
       const dateStr = new Date(log.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const min = Math.floor((log.duration || 0) / 60);
+
+      let icon = '💪';
+      let metaLine = `${min} Min.`;
+      if (log.type === 'activity') {
+        icon = ACTIVITY_ICONS[log.activityType] || '🎯';
+        if (log.distance) metaLine = `${min} Min. · ${log.distance} km`;
+      } else if (log.type === 'quick') {
+        icon = '⚡';
+      } else if (log.type === 'mobility' || log.dayName === 'Mobility & Stretching') {
+        icon = '🧘';
+      }
+
       item.innerHTML = `
-        <div><div class="history-date">${dateStr}</div><div class="history-name">${log.dayName}</div></div>
-        <div class="history-meta">${Math.floor((log.duration || 0) / 60)} Min.</div>
+        <div class="history-icon">${icon}</div>
+        <div style="flex:1"><div class="history-date">${dateStr}</div><div class="history-name">${log.dayName}</div></div>
+        <div class="history-meta">${metaLine}</div>
       `;
       list.appendChild(item);
     });
@@ -1960,7 +2282,10 @@
     const select = document.getElementById('progress-exercise-select');
     select.innerHTML = '<option value="">Übung wählen...</option>';
     const logged = new Set();
-    state.logs.forEach(log => log.exercises.forEach(ex => { if (!ex.isWarmup) logged.add(ex.exerciseId); }));
+    state.logs.forEach(log => {
+      if (!log.exercises) return;
+      log.exercises.forEach(ex => { if (!ex.isWarmup) logged.add(ex.exerciseId); });
+    });
     logged.forEach(id => {
       const ex = window.getExercise(id);
       if (ex) { const opt = document.createElement('option'); opt.value = id; opt.textContent = `${ex.name} (${ex.nameDE})`; select.appendChild(opt); }
@@ -2073,6 +2398,15 @@
     document.getElementById('set-rest').value = p.restMode || 'auto';
     document.getElementById('set-equipment').value = p.preferredEquipment || '';
 
+    // Steps tracking
+    document.getElementById('set-steps-tracking').checked = p.stepsTracking !== false;
+    const goalEl = document.getElementById('set-step-goal');
+    goalEl.value = p.stepGoal || 8000;
+    document.getElementById('set-step-goal-val').textContent = (p.stepGoal || 8000).toLocaleString('de-DE');
+    goalEl.oninput = () => {
+      document.getElementById('set-step-goal-val').textContent = (+goalEl.value).toLocaleString('de-DE');
+    };
+
     // Cycle tracking
     const cycleCheckbox = document.getElementById('set-cycle-tracking');
     cycleCheckbox.checked = !!p.cycleTracking;
@@ -2099,6 +2433,8 @@
     state.profile.minutesPerSession = +document.getElementById('set-minutes').value;
     state.profile.restMode = document.getElementById('set-rest').value;
     state.profile.preferredEquipment = document.getElementById('set-equipment').value || null;
+    state.profile.stepsTracking = document.getElementById('set-steps-tracking').checked;
+    state.profile.stepGoal = +document.getElementById('set-step-goal').value || 8000;
     state.profile.cycleTracking = document.getElementById('set-cycle-tracking').checked;
     state.profile.cycleLength = +document.getElementById('set-cycle-length').value || 28;
     state.profile.lastPeriodStart = document.getElementById('set-period-start').value || null;
@@ -2165,6 +2501,26 @@
 
     document.getElementById('btn-settings').addEventListener('click', showSettings);
     document.getElementById('btn-darkmode').addEventListener('click', toggleDarkMode);
+
+    // Activity/Quick/Steps logging
+    document.getElementById('btn-log-activity').addEventListener('click', openActivityModal);
+    document.getElementById('btn-log-quick').addEventListener('click', openQuickLogModal);
+    document.getElementById('activity-close').addEventListener('click', () => document.getElementById('modal-activity').classList.add('hidden'));
+    document.getElementById('activity-cancel').addEventListener('click', () => document.getElementById('modal-activity').classList.add('hidden'));
+    document.getElementById('activity-save').addEventListener('click', saveActivity);
+    document.getElementById('quick-close').addEventListener('click', () => document.getElementById('modal-quick-log').classList.add('hidden'));
+    document.getElementById('quick-cancel').addEventListener('click', () => document.getElementById('modal-quick-log').classList.add('hidden'));
+    document.getElementById('quick-save').addEventListener('click', saveQuickLog);
+    document.getElementById('steps-close').addEventListener('click', () => document.getElementById('modal-steps').classList.add('hidden'));
+    document.getElementById('steps-cancel').addEventListener('click', () => document.getElementById('modal-steps').classList.add('hidden'));
+    document.getElementById('steps-save').addEventListener('click', saveSteps);
+
+    // Close on backdrop click (modal container === target check)
+    ['modal-activity', 'modal-quick-log', 'modal-steps'].forEach(id => {
+      document.getElementById(id).addEventListener('click', e => {
+        if (e.target === e.currentTarget) document.getElementById(id).classList.add('hidden');
+      });
+    });
 
     document.getElementById('btn-new-plan').addEventListener('click', () => {
       const isDeload = window.Planner.shouldDeload(state.logs);
