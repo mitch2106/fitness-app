@@ -14,12 +14,69 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+  <!-- ═══ AUTH ═══ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-container">
+      <div class="auth-header">
+        <div class="logo">FitPlan</div>
+        <p class="auth-tagline">Dein persönlicher Trainingsplan</p>
+      </div>
+
+      <!-- Login/Register Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="auth-tab-login" type="button">Anmelden</button>
+        <button class="auth-tab" id="auth-tab-register" type="button">Registrieren</button>
+      </div>
+
+      <!-- Login Form -->
+      <div class="auth-form active" id="auth-form-login">
+        <div class="form-group">
+          <label for="auth-login-email">E-Mail</label>
+          <input type="email" id="auth-login-email" autocomplete="email" placeholder="deine@email.de">
+        </div>
+        <div class="form-group">
+          <label for="auth-login-password">Passwort</label>
+          <input type="password" id="auth-login-password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary btn-block btn-large" id="auth-login-submit" type="button">Anmelden</button>
+        <button class="auth-link" id="auth-forgot" type="button">Passwort vergessen?</button>
+      </div>
+
+      <!-- Register Form -->
+      <div class="auth-form" id="auth-form-register">
+        <div class="form-group">
+          <label for="auth-register-email">E-Mail</label>
+          <input type="email" id="auth-register-email" autocomplete="email" placeholder="deine@email.de">
+        </div>
+        <div class="form-group">
+          <label for="auth-register-password">Passwort (mind. 6 Zeichen)</label>
+          <input type="password" id="auth-register-password" autocomplete="new-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary btn-block btn-large" id="auth-register-submit" type="button">Konto erstellen</button>
+      </div>
+
+      <!-- Email verification pending -->
+      <div class="auth-form" id="auth-form-verify">
+        <div class="auth-verify-icon">📧</div>
+        <h3 class="auth-verify-title">Bestätige deine E-Mail</h3>
+        <p class="auth-verify-text">Wir haben dir einen Bestätigungslink geschickt an<br><strong id="auth-verify-email"></strong></p>
+        <p class="auth-verify-hint">Klicke auf den Link in der E-Mail, dann komm hierher zurück und tippe auf "Ich hab bestätigt".</p>
+        <button class="btn btn-primary btn-block btn-large" id="auth-verify-check" type="button">Ich hab bestätigt</button>
+        <button class="auth-link" id="auth-verify-resend" type="button">E-Mail erneut senden</button>
+        <button class="auth-link" id="auth-verify-logout" type="button">Abmelden</button>
+      </div>
+
+      <div class="auth-error hidden" id="auth-error"></div>
+    </div>
+  </div>
+
   <!-- ═══ ONBOARDING ═══ -->
-  <div id="screen-onboarding" class="screen active">
+  <div id="screen-onboarding" class="screen">
     <div class="onboarding-container">
       <div class="onboarding-header">
         <div class="logo">FitPlan</div>
@@ -574,6 +631,12 @@
 
       <div class="section">
         <button class="btn btn-primary btn-block" id="btn-save-settings">Speichern</button>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Konto</h3>
+        <div class="account-info" id="account-info"></div>
+        <button class="btn btn-secondary btn-block" id="btn-logout">Abmelden</button>
       </div>
 
       <div class="section">

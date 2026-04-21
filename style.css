@@ -263,9 +263,136 @@ body {
 
 /* ── Onboarding ───────────────────────────────────────────── */
 
-#screen-onboarding {
+#screen-onboarding,
+#screen-auth {
   background: linear-gradient(180deg, #000000 0%, #1C1C1E 100%);
   color: white;
+}
+
+/* ── Auth Screen ─────────────────────────────────────────── */
+
+.auth-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 60px 24px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-tagline {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.auth-tab.active {
+  background: rgba(255,255,255,0.12);
+  color: white;
+}
+
+.auth-form {
+  display: none;
+  flex-direction: column;
+  animation: fadeIn 0.25s ease;
+}
+
+.auth-form.active {
+  display: flex;
+}
+
+.auth-link {
+  display: block;
+  margin: 12px auto 0;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px;
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+.auth-link:active {
+  color: white;
+}
+
+.auth-error {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 59, 48, 0.15);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: #FF6B6B;
+  border-radius: var(--radius-xs);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.auth-verify-icon {
+  font-size: 3.5rem;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.auth-verify-title {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.auth-verify-text {
+  text-align: center;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.auth-verify-hint {
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.account-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 .onboarding-container {

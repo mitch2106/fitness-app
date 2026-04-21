@@ -209,7 +209,7 @@
     }
 
     const nav = document.getElementById('bottom-nav');
-    nav.classList.toggle('hidden', ['onboarding', 'workout', 'complete'].includes(id));
+    nav.classList.toggle('hidden', ['auth', 'onboarding', 'workout', 'complete'].includes(id));
 
     document.querySelectorAll('.nav-item').forEach(n => {
       n.classList.toggle('active', n.dataset.screen === id);
@@ -250,7 +250,7 @@
     navigatingBack = true;
     const current = state.activeScreen;
 
-    if (current === 'dashboard' || current === 'onboarding') {
+    if (current === 'auth' || current === 'dashboard' || current === 'onboarding') {
       // At home screen → let the browser/app close
       return;
     } else if (current === 'workout') {
@@ -2416,6 +2416,13 @@
     cycleCheckbox.onchange = () => {
       document.getElementById('cycle-settings-detail').classList.toggle('hidden', !cycleCheckbox.checked);
     };
+
+    // Account info
+    const accEl = document.getElementById('account-info');
+    if (accEl && window.FireSync) {
+      const user = window.FireSync.currentUser();
+      accEl.textContent = user ? `Angemeldet als ${user.email}` : 'Nicht angemeldet';
+    }
   }
 
   function showSettings() { populateSettings(); showScreen('settings'); }
@@ -2697,8 +2704,17 @@
     });
 
     document.getElementById('btn-reset-all').addEventListener('click', () => {
-      showConfirm('Alle Daten löschen?', 'Alles wird unwiderruflich gelöscht.', () => {
+      showConfirm('Alle Daten löschen?', 'Nur lokale Daten werden gelöscht. Cloud-Daten bleiben erhalten.', () => {
         Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+        location.reload();
+      });
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      showConfirm('Abmelden?', 'Deine Daten sind in der Cloud gesichert und beim nächsten Login wieder da.', async () => {
+        // Clear local state so next user doesn't inherit
+        Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+        if (window.FireSync) await window.FireSync.signOut();
         location.reload();
       });
     });
@@ -2739,14 +2755,67 @@
   // ── Init ─────────────────────────────────────────────────
 
   function init() {
-    loadState();
     initDarkMode();
-    initOnboarding();
     initEventListeners();
-    history.replaceState({ screen: 'dashboard' }, '', '');
+    initAuthListeners();
+    history.replaceState({ screen: 'auth' }, '', '');
 
-    const isOnboarded = load(STORAGE_KEYS.onboarded);
+    // Start with auth screen by default
+    showScreen('auth');
+
+    // Listen for auth state changes – this drives the app flow
+    if (window.FireSync) {
+      window.FireSync.init();
+      window.FireSync.onAuthStateChanged(handleAuthStateChange);
+    } else {
+      // No Firebase available – fallback to old local-only flow
+      loadState();
+      initOnboarding();
+      const isOnboarded = load(STORAGE_KEYS.onboarded);
+      if (isOnboarded && state.profile) showScreen('dashboard');
+      else showScreen('onboarding');
+    }
+  }
+
+  async function handleAuthStateChange(user) {
+    if (!user) {
+      // Logged out – show auth screen
+      state = {
+        profile: null, plan: null, logs: [], notes: {},
+        weightLog: [], stepLog: [], currentWorkout: null, activeScreen: 'auth'
+      };
+      showAuthScreen('login');
+      return;
+    }
+
+    if (!user.emailVerified) {
+      showAuthScreen('verify');
+      document.getElementById('auth-verify-email').textContent = user.email;
+      return;
+    }
+
+    // User is logged in and verified – load data
+    loadState(); // Load localStorage data first
+    initOnboarding();
+
+    // Sync with Firestore
+    try {
+      const merged = await window.FireSync.syncAll(state);
+      state.profile = merged.profile || state.profile;
+      state.plan = merged.plan || state.plan;
+      state.logs = merged.logs || state.logs;
+      state.notes = merged.notes || state.notes;
+      state.weightLog = merged.weightLog || state.weightLog;
+      if (state.profile) save(STORAGE_KEYS.profile, state.profile);
+      if (state.plan) save(STORAGE_KEYS.plan, state.plan);
+      save(STORAGE_KEYS.logs, state.logs);
+      save(STORAGE_KEYS.notes, state.notes);
+      save(STORAGE_KEYS.weightLog, state.weightLog);
+    } catch(e) { console.error('Firebase sync failed:', e); }
+
+    const isOnboarded = load(STORAGE_KEYS.onboarded) || !!state.profile;
     if (isOnboarded && state.profile) {
+      save(STORAGE_KEYS.onboarded, true);
       // Restore in-progress workout
       const savedWorkout = load(STORAGE_KEYS.currentWorkout);
       if (savedWorkout && savedWorkout.workout) {
@@ -2763,31 +2832,106 @@
     } else {
       showScreen('onboarding');
     }
+  }
 
-    // Sync with Firebase in background (non-blocking)
-    if (window.FireSync) {
-      window.FireSync.syncAll(state).then(merged => {
-        const hadProfile = !!state.profile;
-        state.profile = merged.profile || state.profile;
-        state.plan = merged.plan || state.plan;
-        state.logs = merged.logs || state.logs;
-        state.notes = merged.notes || state.notes;
-        state.weightLog = merged.weightLog || state.weightLog;
-        if (state.profile) save(STORAGE_KEYS.profile, state.profile);
-        if (state.plan) save(STORAGE_KEYS.plan, state.plan);
-        save(STORAGE_KEYS.logs, state.logs);
-        save(STORAGE_KEYS.notes, state.notes);
-        save(STORAGE_KEYS.weightLog, state.weightLog);
+  // ── Auth UI ──────────────────────────────────────────────
 
-        // If we recovered a profile from Firebase, go to dashboard
-        if (!hadProfile && state.profile) {
-          save(STORAGE_KEYS.onboarded, true);
-          showScreen('dashboard');
-        } else if (state.activeScreen === 'dashboard') {
-          renderDashboard(); // Refresh with merged data
-        }
-      }).catch(e => console.error('Firebase sync failed:', e));
+  function showAuthScreen(mode) {
+    showScreen('auth');
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    const hideError = () => document.getElementById('auth-error').classList.add('hidden');
+    hideError();
+
+    if (mode === 'verify') {
+      document.getElementById('auth-form-verify').classList.add('active');
+      document.querySelector('.auth-tabs').style.display = 'none';
+    } else {
+      document.querySelector('.auth-tabs').style.display = '';
+      if (mode === 'register') {
+        document.getElementById('auth-form-register').classList.add('active');
+        document.getElementById('auth-tab-register').classList.add('active');
+      } else {
+        document.getElementById('auth-form-login').classList.add('active');
+        document.getElementById('auth-tab-login').classList.add('active');
+      }
     }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  function friendlyAuthError(err) {
+    const code = err && err.code ? err.code : '';
+    const map = {
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse.',
+      'auth/user-not-found': 'Kein Konto mit dieser E-Mail gefunden.',
+      'auth/wrong-password': 'Falsches Passwort.',
+      'auth/invalid-credential': 'E-Mail oder Passwort falsch.',
+      'auth/email-already-in-use': 'Diese E-Mail ist bereits registriert.',
+      'auth/weak-password': 'Passwort muss mindestens 6 Zeichen lang sein.',
+      'auth/too-many-requests': 'Zu viele Versuche. Bitte später erneut versuchen.',
+      'auth/network-request-failed': 'Keine Internetverbindung.'
+    };
+    return map[code] || (err && err.message) || 'Ein Fehler ist aufgetreten.';
+  }
+
+  function initAuthListeners() {
+    document.getElementById('auth-tab-login').addEventListener('click', () => showAuthScreen('login'));
+    document.getElementById('auth-tab-register').addEventListener('click', () => showAuthScreen('register'));
+
+    document.getElementById('auth-login-submit').addEventListener('click', async () => {
+      const email = document.getElementById('auth-login-email').value.trim();
+      const pw = document.getElementById('auth-login-password').value;
+      if (!email || !pw) { showAuthError('Bitte E-Mail und Passwort eingeben.'); return; }
+      try {
+        await window.FireSync.signIn(email, pw);
+      } catch(e) { showAuthError(friendlyAuthError(e)); }
+    });
+
+    document.getElementById('auth-register-submit').addEventListener('click', async () => {
+      const email = document.getElementById('auth-register-email').value.trim();
+      const pw = document.getElementById('auth-register-password').value;
+      if (!email || !pw) { showAuthError('Bitte E-Mail und Passwort eingeben.'); return; }
+      if (pw.length < 6) { showAuthError('Passwort muss mindestens 6 Zeichen lang sein.'); return; }
+      try {
+        await window.FireSync.signUp(email, pw);
+      } catch(e) { showAuthError(friendlyAuthError(e)); }
+    });
+
+    document.getElementById('auth-verify-check').addEventListener('click', async () => {
+      try {
+        const user = await window.FireSync.reloadUser();
+        if (user && user.emailVerified) {
+          handleAuthStateChange(user);
+        } else {
+          showAuthError('Noch nicht bestätigt. Prüfe dein Postfach und klicke auf den Link.');
+        }
+      } catch(e) { showAuthError(friendlyAuthError(e)); }
+    });
+
+    document.getElementById('auth-verify-resend').addEventListener('click', async () => {
+      try {
+        await window.FireSync.resendVerification();
+        showAuthError('E-Mail wurde erneut gesendet. Prüfe auch den Spam-Ordner.');
+      } catch(e) { showAuthError(friendlyAuthError(e)); }
+    });
+
+    document.getElementById('auth-verify-logout').addEventListener('click', async () => {
+      await window.FireSync.signOut();
+    });
+
+    document.getElementById('auth-forgot').addEventListener('click', async () => {
+      const email = document.getElementById('auth-login-email').value.trim();
+      if (!email) { showAuthError('Bitte gib deine E-Mail ein.'); return; }
+      try {
+        await window.FireSync.resetPassword(email);
+        showAuthError('Passwort-Reset-Link wurde gesendet. Prüfe dein Postfach.');
+      } catch(e) { showAuthError(friendlyAuthError(e)); }
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

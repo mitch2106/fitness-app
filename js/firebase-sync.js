@@ -1,5 +1,5 @@
 // ============================================================
-// Firebase Firestore Sync Layer
+// Firebase Firestore + Auth Layer
 // ============================================================
 window.FireSync = (function() {
 
@@ -12,20 +12,21 @@ window.FireSync = (function() {
     appId: "1:383696306748:web:bcf939e2102b3b21dfb939"
   };
 
-  // We use a single document per data type under a fixed "user" doc
-  // Since there's only one user, we use a fixed ID
-  const USER_DOC_ID = 'eva_default';
-
   let db = null;
+  let auth = null;
   let initialized = false;
+  let authStateCallbacks = [];
 
   function init() {
     if (initialized) return;
     try {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.firestore();
+      auth = firebase.auth();
       initialized = true;
-      console.log('Firebase initialized');
+      auth.onAuthStateChanged(user => {
+        authStateCallbacks.forEach(cb => cb(user));
+      });
     } catch(e) {
       console.error('Firebase init failed:', e);
     }
@@ -36,13 +37,74 @@ window.FireSync = (function() {
     return db;
   }
 
+  function getAuth() {
+    if (!initialized) init();
+    return auth;
+  }
+
+  function currentUser() {
+    return auth ? auth.currentUser : null;
+  }
+
+  function userId() {
+    const u = currentUser();
+    return u ? u.uid : null;
+  }
+
+  function isVerified() {
+    const u = currentUser();
+    return u && u.emailVerified;
+  }
+
+  function onAuthStateChanged(callback) {
+    authStateCallbacks.push(callback);
+    if (auth && auth.currentUser !== undefined) callback(auth.currentUser);
+  }
+
+  // ── Auth ─────────────────────────────────────────────────
+
+  async function signUp(email, password) {
+    init();
+    const result = await auth.createUserWithEmailAndPassword(email, password);
+    await result.user.sendEmailVerification();
+    return result.user;
+  }
+
+  async function signIn(email, password) {
+    init();
+    const result = await auth.signInWithEmailAndPassword(email, password);
+    return result.user;
+  }
+
+  async function signOut() {
+    init();
+    await auth.signOut();
+  }
+
+  async function resendVerification() {
+    const u = currentUser();
+    if (u && !u.emailVerified) await u.sendEmailVerification();
+  }
+
+  async function reloadUser() {
+    const u = currentUser();
+    if (u) await u.reload();
+    return currentUser();
+  }
+
+  async function resetPassword(email) {
+    init();
+    await auth.sendPasswordResetEmail(email);
+  }
+
   // ── Save to Firestore ────────────────────────────────────
 
   async function saveData(collection, data) {
     const fireDb = getDb();
-    if (!fireDb) return;
+    const uid = userId();
+    if (!fireDb || !uid || !isVerified()) return;
     try {
-      await fireDb.collection(collection).doc(USER_DOC_ID).set(data, { merge: true });
+      await fireDb.collection(collection).doc(uid).set(data, { merge: true });
     } catch(e) {
       console.error(`Firestore save ${collection} failed:`, e);
     }
@@ -72,9 +134,10 @@ window.FireSync = (function() {
 
   async function loadData(collection) {
     const fireDb = getDb();
-    if (!fireDb) return null;
+    const uid = userId();
+    if (!fireDb || !uid || !isVerified()) return null;
     try {
-      const doc = await fireDb.collection(collection).doc(USER_DOC_ID).get();
+      const doc = await fireDb.collection(collection).doc(uid).get();
       if (doc.exists) {
         return JSON.parse(doc.data().data);
       }
@@ -100,13 +163,11 @@ window.FireSync = (function() {
   async function syncAll(localState) {
     init();
     const fireDb = getDb();
-    if (!fireDb) return localState;
+    if (!fireDb || !userId() || !isVerified()) return localState;
 
     try {
       const remote = await loadAll();
 
-      // Merge strategy: remote wins if local is empty, otherwise local wins
-      // Exception: logs are merged by combining unique entries
       const merged = { ...localState };
 
       if (!merged.profile && remote.profile) merged.profile = remote.profile;
@@ -114,7 +175,6 @@ window.FireSync = (function() {
       if ((!merged.notes || Object.keys(merged.notes).length === 0) && remote.notes) merged.notes = remote.notes;
       if ((!merged.weightLog || merged.weightLog.length === 0) && remote.weightLog) merged.weightLog = remote.weightLog;
 
-      // Merge logs: combine by id, no duplicates
       if (remote.logs && remote.logs.length > 0) {
         const localIds = new Set((merged.logs || []).map(l => l.id));
         const remoteLogs = remote.logs.filter(l => !localIds.has(l.id));
@@ -139,6 +199,16 @@ window.FireSync = (function() {
 
   return {
     init,
+    currentUser,
+    userId,
+    isVerified,
+    onAuthStateChanged,
+    signUp,
+    signIn,
+    signOut,
+    resendVerification,
+    reloadUser,
+    resetPassword,
     saveProfile,
     savePlan,
     saveLogs,
