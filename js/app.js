@@ -1744,43 +1744,50 @@
             const inputGroup = document.createElement('div');
             inputGroup.className = 'set-input-group';
 
-            // Reps stepper
+            // Reps group: [Label] [-] [Input] [+]
+            const repsUnit = document.createElement('div');
+            repsUnit.className = 'stepper-unit';
+            const repsLabel = document.createElement('span');
+            repsLabel.className = 'stepper-unit-label';
+            repsLabel.textContent = 'Wdh';
+            repsUnit.appendChild(repsLabel);
+
             const repsMinus = document.createElement('button');
             repsMinus.type = 'button'; repsMinus.className = 'stepper-btn';
             repsMinus.textContent = '−';
             repsMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.reps = Math.max(1, (set.reps || ex.targetReps) - 1); repsInput.value = set.reps; });
-            inputGroup.appendChild(repsMinus);
+            repsUnit.appendChild(repsMinus);
 
             const repsInput = document.createElement('input');
             repsInput.type = 'number'; repsInput.className = 'set-input';
             repsInput.placeholder = ex.targetReps; repsInput.inputMode = 'numeric';
             repsInput.value = set.reps || '';
             repsInput.addEventListener('input', e => { set.reps = +e.target.value; });
-            inputGroup.appendChild(repsInput);
+            repsUnit.appendChild(repsInput);
 
             const repsPlus = document.createElement('button');
             repsPlus.type = 'button'; repsPlus.className = 'stepper-btn';
             repsPlus.textContent = '+';
             repsPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.reps = (set.reps || ex.targetReps) + 1; repsInput.value = set.reps; });
-            inputGroup.appendChild(repsPlus);
+            repsUnit.appendChild(repsPlus);
 
-            const repsLabel = document.createElement('span');
-            repsLabel.className = 'set-input-label';
-            repsLabel.textContent = 'Wdh';
-            inputGroup.appendChild(repsLabel);
+            inputGroup.appendChild(repsUnit);
 
-            // Weight input (always shown – optional for bodyweight exercises)
+            // Weight group (only for non-warmup/cooldown)
             if (!ex.isWarmup && !ex.isCooldown) {
-              const sep = document.createElement('span');
-              sep.className = 'set-input-sep';
-              inputGroup.appendChild(sep);
+              const wUnit = document.createElement('div');
+              wUnit.className = 'stepper-unit';
+              const kgLabel = document.createElement('span');
+              kgLabel.className = 'stepper-unit-label';
+              kgLabel.textContent = 'kg';
+              wUnit.appendChild(kgLabel);
 
               const defaultW = ex.targetWeight || 0;
               const wMinus = document.createElement('button');
               wMinus.type = 'button'; wMinus.className = 'stepper-btn';
               wMinus.textContent = '−';
               wMinus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = Math.max(0, (set.weight || defaultW) - 0.5); wInput.value = set.weight || ''; });
-              inputGroup.appendChild(wMinus);
+              wUnit.appendChild(wMinus);
 
               const wInput = document.createElement('input');
               wInput.type = 'number'; wInput.className = 'set-input' + (!ex.targetWeight ? ' set-input-optional' : '');
@@ -1788,18 +1795,15 @@
               wInput.inputMode = 'decimal'; wInput.step = '0.5';
               wInput.value = set.weight || '';
               wInput.addEventListener('input', e => { set.weight = +e.target.value || null; });
-              inputGroup.appendChild(wInput);
+              wUnit.appendChild(wInput);
 
               const wPlus = document.createElement('button');
               wPlus.type = 'button'; wPlus.className = 'stepper-btn';
               wPlus.textContent = '+';
               wPlus.addEventListener('click', e => { e.stopPropagation(); hapticLight(); set.weight = (set.weight || defaultW) + 0.5; wInput.value = set.weight; });
-              inputGroup.appendChild(wPlus);
+              wUnit.appendChild(wPlus);
 
-              const kgLabel = document.createElement('span');
-              kgLabel.className = 'set-input-label';
-              kgLabel.textContent = 'kg';
-              inputGroup.appendChild(kgLabel);
+              inputGroup.appendChild(wUnit);
             }
             row.appendChild(inputGroup);
           } else {
@@ -1811,36 +1815,11 @@
           }
         }
 
-        // Done button
+        // Done button – click handling via event delegation (avoids double-fire bug)
         const doneBtn = document.createElement('button');
         doneBtn.type = 'button';
         doneBtn.className = 'btn-set-done' + (set.completed ? ' done' : '');
         doneBtn.textContent = '✓';
-        if (!set.completed) {
-          doneBtn.addEventListener('click', () => {
-            if (!(exercise.isTimed || ex.targetDuration)) {
-              if (!set.reps) set.reps = ex.targetReps;
-              if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
-            }
-            set.completed = true;
-
-            // PR check
-            if (!ex.isWarmup && !ex.isCooldown && !ex.isWarmupSet) {
-              if (checkForPR(ex.exerciseId, ex.sets)) {
-                if (!wo.prs.includes(ex.exerciseId)) {
-                  wo.prs.push(ex.exerciseId);
-                  showConfetti();
-                  doneBeep();
-                  hapticHeavy();
-                }
-              }
-            }
-
-            hapticMedium();
-            renderWorkout();
-            maybeShowRestTimer(ex, exIdx, setIdx);
-          });
-        }
         row.appendChild(doneBtn);
         setsDiv.appendChild(row);
       });
