@@ -880,7 +880,28 @@
 
   // ── Quick Exercise Logging ───────────────────────────────
 
+  let quickLogContext = null; // null = standalone log, 'workout' = add to current workout
+
   function openQuickLogModal() {
+    quickLogContext = null;
+    populateQuickLogExercises();
+    resetQuickLogForm();
+    document.getElementById('modal-quick-log').classList.remove('hidden');
+    document.querySelector('#modal-quick-log .modal-header h3').textContent = 'Einzel-Übung loggen';
+    document.getElementById('quick-date-group').style.display = '';
+  }
+
+  function openAddExerciseToWorkoutModal() {
+    quickLogContext = 'workout';
+    populateQuickLogExercises();
+    resetQuickLogForm();
+    document.getElementById('modal-quick-log').classList.remove('hidden');
+    document.querySelector('#modal-quick-log .modal-header h3').textContent = 'Übung zum Training hinzufügen';
+    // Hide date field when adding to current workout (always now)
+    document.getElementById('quick-date-group').style.display = 'none';
+  }
+
+  function populateQuickLogExercises() {
     const select = document.getElementById('quick-exercise');
     select.innerHTML = '';
     const mainCategories = ['upper_push', 'upper_pull', 'lower', 'core', 'compound'];
@@ -893,36 +914,75 @@
         opt.textContent = `${ex.name} (${ex.nameDE})`;
         select.appendChild(opt);
       });
+  }
 
+  function resetQuickLogForm() {
     document.getElementById('quick-sets').value = '1';
     document.getElementById('quick-reps').value = '';
     document.getElementById('quick-weight').value = '';
+    document.getElementById('quick-time-sets').value = '1';
+    document.getElementById('quick-duration').value = '';
     document.getElementById('quick-date').value = formatLocalDatetime(new Date());
-    document.getElementById('modal-quick-log').classList.remove('hidden');
+    // Default to reps mode
+    document.getElementById('quick-mode-reps').classList.add('active');
+    document.getElementById('quick-mode-time').classList.remove('active');
+    document.getElementById('quick-reps-fields').classList.remove('hidden');
+    document.getElementById('quick-time-fields').classList.add('hidden');
   }
 
   function saveQuickLog() {
     const exerciseId = document.getElementById('quick-exercise').value;
-    const setsCount = +document.getElementById('quick-sets').value || 1;
-    const reps = +document.getElementById('quick-reps').value;
-    const weight = +document.getElementById('quick-weight').value || null;
-    const dateStr = document.getElementById('quick-date').value;
-
-    if (!reps || reps < 1) { alert('Bitte Wiederholungen eingeben.'); return; }
     const exercise = window.getExercise(exerciseId);
     if (!exercise) { alert('Bitte Übung wählen.'); return; }
 
-    const totalReps = setsCount * reps;
-    const sets = [];
-    for (let i = 0; i < setsCount; i++) {
-      sets.push({ reps, weight, duration: null, completed: true });
+    const timeMode = document.getElementById('quick-mode-time').classList.contains('active');
+    let setsCount, sets, dayName;
+
+    if (timeMode) {
+      setsCount = +document.getElementById('quick-time-sets').value || 1;
+      const duration = +document.getElementById('quick-duration').value;
+      if (!duration || duration < 1) { alert('Bitte Dauer in Sekunden eingeben.'); return; }
+      sets = [];
+      for (let i = 0; i < setsCount; i++) {
+        sets.push({ reps: null, weight: null, duration, completed: true });
+      }
+      dayName = `⚡ ${setsCount}× ${duration}s ${exercise.name}`;
+    } else {
+      setsCount = +document.getElementById('quick-sets').value || 1;
+      const reps = +document.getElementById('quick-reps').value;
+      const weight = +document.getElementById('quick-weight').value || null;
+      if (!reps || reps < 1) { alert('Bitte Wiederholungen eingeben.'); return; }
+      sets = [];
+      for (let i = 0; i < setsCount; i++) {
+        sets.push({ reps, weight, duration: null, completed: true });
+      }
+      dayName = `⚡ ${setsCount}× ${reps} ${exercise.name}`;
     }
 
+    if (quickLogContext === 'workout' && state.currentWorkout) {
+      // Add to current workout (already completed)
+      state.currentWorkout.exercises.push({
+        exerciseId,
+        isWarmup: false, isCooldown: false, isWarmupSet: false,
+        targetSets: setsCount,
+        targetReps: timeMode ? null : +document.getElementById('quick-reps').value,
+        targetDuration: timeMode ? +document.getElementById('quick-duration').value : null,
+        targetWeight: timeMode ? null : (+document.getElementById('quick-weight').value || null),
+        restSeconds: 60,
+        sets
+      });
+      hapticMedium();
+      document.getElementById('modal-quick-log').classList.add('hidden');
+      renderWorkout();
+      return;
+    }
+
+    const dateStr = document.getElementById('quick-date').value;
     const log = {
       id: 'log_' + Date.now(),
       date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
       type: 'quick',
-      dayName: `⚡ ${totalReps}× ${exercise.name}`,
+      dayName,
       duration: 0,
       exercises: [{
         exerciseId,
@@ -1028,7 +1088,9 @@
       div.className = 'cal-day' + (isToday ? ' today' : '') + (hasWorkout ? ' done' : '');
       div.innerHTML = `<span class="cal-label">${dayLabels[i]}</span><span class="cal-num">${d.getDate()}</span>`;
 
-      if (hasWorkout) {
+      // All days are clickable (future days can be planned, past days can be backfilled)
+      const isFuture = d > now && !isToday;
+      if (!isFuture) {
         div.style.cursor = 'pointer';
         div.addEventListener('click', () => showDayDetail(dateStr, dayLogs));
       }
@@ -1157,8 +1219,68 @@
       html += '</div></div>';
     });
 
+    // Show steps for that day
+    const dayISO = new Date(dateStr).toISOString().slice(0, 10);
+    const stepEntry = (state.stepLog || []).find(e => new Date(e.date).toISOString().slice(0, 10) === dayISO);
+    const stepValue = stepEntry ? stepEntry.steps : '';
+    if (state.profile && state.profile.stepsTracking !== false) {
+      html += `
+        <div class="day-detail-workout">
+          <div class="day-detail-header">
+            <span class="day-detail-name">👟 Schritte</span>
+          </div>
+          <div class="form-group" style="margin-top:10px;margin-bottom:0">
+            <input type="number" id="day-detail-steps" placeholder="z.B. 8000" inputmode="numeric" value="${stepValue}" data-date="${dayISO}">
+          </div>
+        </div>
+      `;
+    }
+
+    // Empty state: offer to add activity/exercise
+    if (dayLogs.length === 0) {
+      html += `<p class="day-detail-empty">Noch nichts eingetragen.</p>`;
+    }
+
+    html += `
+      <div class="day-detail-actions">
+        <button type="button" class="btn btn-secondary btn-block" id="day-detail-add-activity">🚴 Aktivität nachtragen</button>
+        <button type="button" class="btn btn-secondary btn-block" id="day-detail-add-quick">⚡ Übung nachtragen</button>
+      </div>
+    `;
+
     content.innerHTML = html;
     modal.classList.remove('hidden');
+
+    // Save steps on blur/change
+    const stepsInput = document.getElementById('day-detail-steps');
+    if (stepsInput) {
+      stepsInput.addEventListener('change', () => {
+        const steps = +stepsInput.value;
+        if (isNaN(steps) || steps < 0) return;
+        const iso = stepsInput.dataset.date;
+        const existing = state.stepLog.findIndex(e => new Date(e.date).toISOString().slice(0, 10) === iso);
+        const dateObj = new Date(iso + 'T12:00:00');
+        const entry = { date: dateObj.toISOString(), steps };
+        if (existing >= 0) state.stepLog[existing] = entry;
+        else state.stepLog.push(entry);
+        saveStepLog();
+        hapticLight();
+        if (state.activeScreen === 'dashboard') renderStepsWidget();
+      });
+    }
+
+    // Backfill buttons open respective modals pre-filled with date
+    const backfillDate = formatLocalDatetime(new Date(dateStr + ' 12:00:00'));
+    document.getElementById('day-detail-add-activity').addEventListener('click', () => {
+      modal.classList.add('hidden');
+      openActivityModal();
+      document.getElementById('activity-date').value = backfillDate;
+    });
+    document.getElementById('day-detail-add-quick').addEventListener('click', () => {
+      modal.classList.add('hidden');
+      openQuickLogModal();
+      document.getElementById('quick-date').value = backfillDate;
+    });
   }
 
   function calculateStreak(logs) {
@@ -1759,8 +1881,44 @@
       setTimeout(() => finishWorkout(), 500);
     }
 
+    // Action buttons at bottom
+    const actions = document.createElement('div');
+    actions.className = 'workout-footer-actions';
+    actions.innerHTML = `
+      <button type="button" class="workout-add-btn" id="workout-add-exercise">
+        <span class="workout-add-icon">+</span>
+        <span>Zusatzübung hinzufügen</span>
+      </button>
+      <button type="button" class="btn btn-primary btn-block btn-large" id="workout-finish-now">
+        Training beenden
+      </button>
+    `;
+    container.appendChild(actions);
+
+    container.querySelector('#workout-finish-now').addEventListener('click', () => {
+      if (completedSets === 0) {
+        showConfirm('Training abbrechen?', 'Du hast noch keinen Satz abgehakt. Nichts wird gespeichert.', () => {
+          stopWorkoutTimer(); releaseWakeLock();
+          clearInterval(restTimerInterval); clearInterval(exerciseTimerInterval);
+          document.getElementById('rest-overlay').classList.add('hidden');
+          document.getElementById('exercise-timer-overlay').classList.add('hidden');
+          state.currentWorkout = null;
+          clearSavedWorkout();
+          showScreen('dashboard');
+        });
+        return;
+      }
+      showConfirm('Training beenden?', `Du hast ${completedSets} von ${totalSets} Sätzen gemacht. Der Rest wird als nicht gemacht gespeichert.`, () => {
+        finishWorkout();
+      });
+    });
+
+    container.querySelector('#workout-add-exercise').addEventListener('click', () => {
+      openAddExerciseToWorkoutModal();
+    });
+
     const spacer = document.createElement('div');
-    spacer.style.height = '100px';
+    spacer.style.height = '60px';
     container.appendChild(spacer);
   }
 
@@ -1845,8 +2003,10 @@
     exerciseTimerTotal = duration;
     exerciseTimerRemaining = duration;
     exerciseTimerRunning = false;
+    exerciseTimerTargetReached = false;
     exerciseTimerCallback = callback;
     document.getElementById('exercise-timer-progress').style.strokeDasharray = 2 * Math.PI * 54;
+    document.getElementById('exercise-timer-value').classList.remove('overtime');
     updateExerciseTimerDisplay();
     document.getElementById('btn-timer-toggle').textContent = 'Start';
   }
@@ -1859,6 +2019,8 @@
     document.getElementById('exercise-timer-progress').style.strokeDashoffset =
       circumference * (1 - exerciseTimerRemaining / exerciseTimerTotal);
   }
+
+  let exerciseTimerTargetReached = false;
 
   function toggleExerciseTimer() {
     if (exerciseTimerRunning) {
@@ -1873,28 +2035,49 @@
       clearInterval(exerciseTimerInterval);
       exerciseTimerInterval = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
-        exerciseTimerRemaining = Math.max(0, startRemaining - elapsed);
-        updateExerciseTimerDisplay();
 
-        const rem = Math.ceil(exerciseTimerRemaining);
-        if (rem <= 3 && rem > 0 && Math.abs(exerciseTimerRemaining - rem) < 0.02) countdownBeep();
+        if (!exerciseTimerTargetReached) {
+          // Counting down to target
+          exerciseTimerRemaining = Math.max(0, startRemaining - elapsed);
+          updateExerciseTimerDisplay();
 
-        if (exerciseTimerRemaining <= 0) {
-          clearInterval(exerciseTimerInterval);
-          exerciseTimerRunning = false;
-          doneBeep();
-          hapticHeavy();
-          document.getElementById('btn-timer-toggle').textContent = 'Start';
-          closeExerciseTimer(exerciseTimerTotal);
+          const rem = Math.ceil(exerciseTimerRemaining);
+          if (rem <= 3 && rem > 0 && Math.abs(exerciseTimerRemaining - rem) < 0.02) countdownBeep();
+
+          if (exerciseTimerRemaining <= 0) {
+            // Target reached – signal but keep running as overtime
+            exerciseTimerRemaining = 0;
+            exerciseTimerTargetReached = true;
+            doneBeep();
+            hapticHeavy();
+            // Update button to "Fertig" so user knows they can stop
+            document.getElementById('btn-timer-toggle').textContent = 'Pause';
+            document.getElementById('exercise-timer-value').classList.add('overtime');
+          }
+        } else {
+          // Overtime mode: count up from 0
+          const overtime = elapsed - (exerciseTimerTotal - startRemaining);
+          updateOvertimeDisplay(overtime);
         }
       }, 10);
     }
   }
 
+  function updateOvertimeDisplay(overtime) {
+    const seconds = Math.floor(overtime);
+    const cs = Math.floor((overtime % 1) * 100);
+    document.getElementById('exercise-timer-value').textContent = `+${seconds}.${String(cs).padStart(2, '0')}`;
+    // Fill the progress ring completely in overtime color
+    const circumference = 2 * Math.PI * 54;
+    document.getElementById('exercise-timer-progress').style.strokeDashoffset = 0;
+  }
+
   function resetExerciseTimer() {
     clearInterval(exerciseTimerInterval);
     exerciseTimerRunning = false;
+    exerciseTimerTargetReached = false;
     exerciseTimerRemaining = exerciseTimerTotal;
+    document.getElementById('exercise-timer-value').classList.remove('overtime');
     updateExerciseTimerDisplay();
     document.getElementById('btn-timer-toggle').textContent = 'Start';
   }
@@ -2518,6 +2701,18 @@
     document.getElementById('quick-close').addEventListener('click', () => document.getElementById('modal-quick-log').classList.add('hidden'));
     document.getElementById('quick-cancel').addEventListener('click', () => document.getElementById('modal-quick-log').classList.add('hidden'));
     document.getElementById('quick-save').addEventListener('click', saveQuickLog);
+    document.getElementById('quick-mode-reps').addEventListener('click', () => {
+      document.getElementById('quick-mode-reps').classList.add('active');
+      document.getElementById('quick-mode-time').classList.remove('active');
+      document.getElementById('quick-reps-fields').classList.remove('hidden');
+      document.getElementById('quick-time-fields').classList.add('hidden');
+    });
+    document.getElementById('quick-mode-time').addEventListener('click', () => {
+      document.getElementById('quick-mode-time').classList.add('active');
+      document.getElementById('quick-mode-reps').classList.remove('active');
+      document.getElementById('quick-time-fields').classList.remove('hidden');
+      document.getElementById('quick-reps-fields').classList.add('hidden');
+    });
     document.getElementById('steps-close').addEventListener('click', () => document.getElementById('modal-steps').classList.add('hidden'));
     document.getElementById('steps-cancel').addEventListener('click', () => document.getElementById('modal-steps').classList.add('hidden'));
     document.getElementById('steps-save').addEventListener('click', saveSteps);
@@ -2632,17 +2827,18 @@
         const info = getExSetIdx(doneBtn);
         if (info && info.setIdx >= 0) {
           const ex = wo.exercises[info.exIdx];
-          const exercise = window.getExercise(ex.exerciseId);
-          const set = ex.sets[info.setIdx];
-          if (ex && exercise && set) {
+          const exercise = ex ? window.getExercise(ex.exerciseId) : null;
+          const set = ex && ex.sets ? ex.sets[info.setIdx] : null;
+          if (ex && set) {
             if (set.completed) {
               // Undo: mark as not completed
               set.completed = false;
               hapticLight();
               renderWorkout();
             } else {
-              // Complete set
-              if (!(exercise.isTimed || ex.targetDuration)) {
+              // Complete set – works even if exercise metadata is missing
+              const isTimed = (exercise && exercise.isTimed) || ex.targetDuration;
+              if (!isTimed) {
                 if (!set.reps) set.reps = ex.targetReps;
                 if (!set.weight && ex.targetWeight) set.weight = ex.targetWeight;
               }
@@ -2688,7 +2884,14 @@
     document.getElementById('btn-timer-toggle').addEventListener('click', toggleExerciseTimer);
     document.getElementById('btn-timer-reset').addEventListener('click', resetExerciseTimer);
     document.getElementById('btn-timer-done').addEventListener('click', () => {
-      closeExerciseTimer(exerciseTimerTotal - exerciseTimerRemaining);
+      // If in overtime mode, read the actual displayed time (target + bonus)
+      if (exerciseTimerTargetReached) {
+        const displayedText = document.getElementById('exercise-timer-value').textContent.replace('+', '');
+        const bonus = parseFloat(displayedText) || 0;
+        closeExerciseTimer(exerciseTimerTotal + bonus);
+      } else {
+        closeExerciseTimer(exerciseTimerTotal - exerciseTimerRemaining);
+      }
     });
 
     document.getElementById('btn-complete-done').addEventListener('click', () => showScreen('dashboard'));

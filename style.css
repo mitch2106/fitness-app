@@ -975,6 +975,43 @@ input::placeholder {
   margin-bottom: 16px;
 }
 
+.workout-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.workout-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.workout-add-btn:active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.workout-add-icon {
+  font-size: 1.3rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
 .workout-exercise-card {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -1241,6 +1278,11 @@ input::placeholder {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+
+.timer-value.overtime {
+  color: var(--success);
 }
 
 .timer-value.large {
@@ -2162,6 +2204,20 @@ body.dark .note-textarea {
 .day-detail-meta {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.day-detail-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 16px 0;
+}
+
+.day-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .day-detail-exercises {
